@@ -2,9 +2,9 @@
 
 **Work In Progress**
 
-These are the Node-RED nodes that interact with [flowhub.org](flowhub.org).
+These are the Node-RED nodes that interact with [FlowHub.org](https://flowhub.org).
 
-[FlowHub.org](https://FlowHub.org) is a first attempt to provide a gist-like service for Node-RED.
+[FlowHub.org](https://FlowHub.org) is an first attempt to provide a gist-like service for Node-RED.
 
 The aim is to make it easy to share flow-tabs amongst Node-RED developers.
 
