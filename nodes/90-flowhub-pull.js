@@ -1,5 +1,5 @@
 module.exports = function(RED) {
-  function FlowHubGetFunctionality(config) {
+  function FlowHubPullFunctionality(config) {
     RED.nodes.createNode(this,config);
 
     var node = this;
@@ -13,5 +13,5 @@ module.exports = function(RED) {
     });
   };
 
-  RED.nodes.registerType("FlowHubGet", FlowHubGetFunctionality);
+  RED.nodes.registerType("FlowHubPull", FlowHubPullFunctionality);
 }

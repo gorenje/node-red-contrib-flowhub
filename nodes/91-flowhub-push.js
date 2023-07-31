@@ -10,7 +10,6 @@ module.exports = function(RED) {
     });
 
     node.on("input", function(msg, send, done) {
-      const os = require('os');
       const got = require('got');
 
       RED.util.evaluateNodeProperty(cfg.apiToken, cfg.apiTokenType,
@@ -21,6 +20,11 @@ module.exports = function(RED) {
         } else {
           var access_token = result;
 
+          // remove flowhub nodes from the submission
+          var flowdata = msg.flowdata.filter(function(obj) {
+            return (obj.type != "FlowHubPull" && obj.type != "FlowHubPush")
+          });
+
           got.post( "https://api.flowhub.org/v1/flows", {
             headers: {
               "FlowHub-API-Version": "brownbear",
@@ -28,7 +32,7 @@ module.exports = function(RED) {
             },
             json: {
               flowid: msg.flowid,
-              flowdata: msg.flowdata,
+              flowdata: flowdata,
               flowlabel: msg.flowlabel,
             },
             timeout: {
@@ -74,10 +78,13 @@ module.exports = function(RED) {
                        var node = RED.nodes.getNode(req.params.id);
                        if (node != null) {
                          try {
-                           if (req.body && req.body.flowhub) {
-                             node.receive(req.body);
+                           if (req.body && req.body.flowhub && req.params.id) {
+                             var nde = RED.nodes.getNode(req.params.id)
+                             if ( nde && nde.type == "FlowHubPush" ) {
+                               node.receive(req.body);
+                             }
                            } else {
-                             node.receive();
+                             res.sendStatus(404);
                            }
                            res.sendStatus(200);
                          } catch(err) {

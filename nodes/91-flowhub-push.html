@@ -32,11 +32,6 @@
 
       var activeWorkspace = RED.workspaces.active();
 
-      // remove flowhub nodes from the submission - they are transparent nodes
-      flowdata = flowdata.filter(function(obj) {
-        return (obj.type != "FlowHubGet" && obj.type != "FlowHubPush")
-      });
-
       $.ajax({
         url: "flowhub/" + node.id,
         type: "POST",
@@ -156,6 +151,9 @@
 <script type="text/html" data-help-name="FlowHubPush">
   <p>
       Push current flow tab to FlowHub.org.
-      All FlowHub nodes are ignored when flows are pushed to FlowHub.
+      FlowHub nodes are ignored when flow-tabs are pushed to FlowHub.
+      Flow tabs are exported from the frontend, this means non-deployed
+      versions for flow tabs are exported. Frontend-only changes are
+      exported.
   </p>
 </script>

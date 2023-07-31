@@ -12,7 +12,7 @@
      });
    };
 
-   RED.nodes.registerType('FlowHubGet',{
+   RED.nodes.registerType('FlowHubPull',{
      color: '#44eeff',
      icon: "icons/change.svg",
      category: 'flowhub',
@@ -86,21 +86,22 @@
  })();
 </script>
 
-<script type="text/html" data-template-name="FlowHubGet">
+<script type="text/html" data-template-name="FlowHubPull">
     <div class="form-row">
         <label for="node-input-flowid">
             <i class="fa fa-tag"></i>
             <span>FlowId</span>
         </label>
-        <input type="text" id="node-input-flowid" placeholder="FlowId">
+        <input type="text" id="node-input-flowid"
+               placeholder="FlowId to Import">
     </div>
 
     <div class="form-row">
-        <label for="node-input-notab">
-            <span>No Flow Tab?</span>
-        </label>
-        <input type="checkbox" id="node-input-notab"
-               style="display:inline-block; width:15px; vertical-align:baseline;">
+      <label for="node-input-notab">
+        <span>No Flow Tab?</span>
+      </label>
+      <input type="checkbox" id="node-input-notab"
+             style="display:inline-block; width:15px; vertical-align:baseline;">
     </div>
 
     <div class="form-row node-input-target-row">
@@ -111,13 +112,18 @@
     </div>
 
     <div class="form-row">
+      Copy the flow id into the field and press import to pull flows
+      from FlowHub.
+    </div>
+
+    <div class="form-row">
         <textarea id="node-input-allflows"
                   style="width: 425px; height: 420px;">
         </textarea>
     </div>
 </script>
 
-<script type="text/html" data-help-name="FlowHubGet">
+<script type="text/html" data-help-name="FlowHubPull">
     <p>
         Import Flows from FlowHub.org. Opens the flow import dialog
         with flow data. Flow can be imported into a new tab or the
