@@ -1,0 +1,126 @@
+<script type="text/javascript">
+ (function(){
+   function flowHubUpdateFlows() {
+     $.get( "https://api.flowhub.org/v1/flows?cb=" + new Date(), (e,d) => {
+       var content = [];
+
+       Object.keys( e.data ).forEach( function(key) {
+         content.push( key + ": " + e.data[key].name );
+       });
+
+       $('#node-input-allflows').val( content.join("\n") );
+     });
+   };
+
+   RED.nodes.registerType('FlowHubGet',{
+     color: '#44eeff',
+     icon: "icons/change.svg",
+     category: 'flowhub',
+     defaults: {
+     },
+     inputs: 0,
+     outputs: 0,
+
+     label: function() {
+       return (this.name || this._def.paletteLabel);
+     },
+
+     onpaletteadd: () => {
+     },
+
+     oneditprepare: function() {
+       flowHubUpdateFlows();
+
+       $('#node-input-refresh-list-but').on('click', function(e) {
+         e.preventDefault();
+         $('#node-input-allflows').val("");
+
+         setTimeout( () => { flowHubUpdateFlows() }, 500);
+       });
+
+       $("#node-input-import-flow-but").on("click", function(e) {
+         e.preventDefault();
+
+         var notab = $('#node-input-notab').prop('checked');
+
+         if ( $('#node-input-flowid').val().trim() == "" ||
+              !$('#node-input-flowid').val() ) {
+           return RED.notify(RED._("notification.warning", {
+             message: "FlowID not provided, doing nothing."
+           }), "warning");
+         }
+
+         $('#node-dialog-cancel').trigger('click')
+
+         $.get( "https://api.flowhub.org/v1/flows/" +
+                $('#node-input-flowid').val() +
+                "?cb=" + new Date(), function(e,d) {
+                  RED.clipboard.import();
+                  setTimeout( () => {
+                    var content = e;
+
+                    if ( notab ) {
+                      content = e.filter(function(o) {
+                        return o.type != "tab"
+                      });
+                    }
+
+                    $('#red-ui-clipboard-dialog-import-text').val(
+                      JSON.stringify(content)
+                    ).trigger("paste");
+                  }, 300);
+                });
+       });
+     },
+
+     oneditcancel: function() {
+     },
+
+     oneditsave: function() {
+     },
+
+     labelStyle: function() {
+       return this.name?"node_label_italic":"";
+     },
+   });
+ })();
+</script>
+
+<script type="text/html" data-template-name="FlowHubGet">
+    <div class="form-row">
+        <label for="node-input-flowid">
+            <i class="fa fa-tag"></i>
+            <span>FlowId</span>
+        </label>
+        <input type="text" id="node-input-flowid" placeholder="FlowId">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-notab">
+            <span>No Flow Tab?</span>
+        </label>
+        <input type="checkbox" id="node-input-notab"
+               style="display:inline-block; width:15px; vertical-align:baseline;">
+    </div>
+
+    <div class="form-row node-input-target-row">
+        <button id="node-input-import-flow-but"
+                class="red-ui-button">Import Flow</button>
+        <button id="node-input-refresh-list-but"
+                class="red-ui-button">Refresh</button>
+    </div>
+
+    <div class="form-row">
+        <textarea id="node-input-allflows"
+                  style="width: 425px; height: 420px;">
+        </textarea>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="FlowHubGet">
+    <p>
+        Import Flows from FlowHub.org. Opens the flow import dialog
+        with flow data. Flow can be imported into a new tab or the
+        existing tab.
+    </p>
+</script>

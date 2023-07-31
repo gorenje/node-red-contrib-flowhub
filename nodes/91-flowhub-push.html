@@ -1,0 +1,161 @@
+<script type="text/javascript">
+  (function(){
+
+    function getFlowDataFromCurrentWorkspace() {
+      /******
+       ** Code taken from Node-RED code base:
+       **
+       ** https://github.com/node-red/node-red/blob/e8ddee24a9944e57d186f02b081295c56a45b67c/packages/node_modules/%40node-red/editor-client/src/js/ui/clipboard.js#L710-L723
+       **
+       **/
+      var activeWorkspace = RED.workspaces.active();
+      var nodes = RED.nodes.groups(activeWorkspace);
+
+      nodes = nodes.concat(RED.nodes.junctions(activeWorkspace));
+      nodes = nodes.concat(RED.nodes.filterNodes({z:activeWorkspace}));
+
+      RED.nodes.eachConfig(function(n) {
+        if (n.z === RED.workspaces.active() && n._def.hasUsers === false) {
+          // Grab any config nodes scoped to this flow that don't
+          // require any flow-nodes to use them
+          nodes.push(n);
+        }
+      });
+
+      var parentNode = RED.nodes.workspace(activeWorkspace)||RED.nodes.subflow(activeWorkspace);
+      nodes.unshift(parentNode);
+
+      return RED.nodes.createExportableNodeSet(nodes);
+    }
+
+    function doSubmission(node, flowdata) {
+
+      var activeWorkspace = RED.workspaces.active();
+
+      // remove flowhub nodes from the submission - they are transparent nodes
+      flowdata = flowdata.filter(function(obj) {
+        return (obj.type != "FlowHubGet" && obj.type != "FlowHubPush")
+      });
+
+      $.ajax({
+        url: "flowhub/" + node.id,
+        type: "POST",
+        data: JSON.stringify({
+          flowid:    activeWorkspace,
+          flowhub:   "submission from " + node.id,
+          flowdata:  flowdata||{},
+          flowlabel: RED.nodes.workspace(activeWorkspace).label
+        }),
+        contentType: "application/json; charset=utf-8",
+
+        success: function (resp) {
+          RED.notify("Submission succeed", {
+            type: "success",
+            id: "FlowHubPush",
+            timeout: 2000
+          });
+        },
+
+        error: function (jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 404) {
+            RED.notify(node._("common.notification.error", {
+              message: node._("common.notification.errors.not-deployed")
+            }), "error");
+          } else if (jqXHR.status == 500) {
+            RED.notify(node._("common.notification.error", {
+              message: node._("inject.errors.failed")
+            }), "error");
+          } else if (jqXHR.status == 0) {
+            RED.notify(node._("common.notification.error", {
+              message: node._("common.notification.errors.no-response")
+            }), "error");
+          } else {
+            RED.notify(node._("common.notification.error", {
+              message: node._("common.notification.errors.unexpected", {
+                status: jqXHR.status, message: textStatus }) }), "error");
+          }
+        }
+      });
+    }
+
+    RED.nodes.registerType('FlowHubPush',{
+      color: '#44eeff',
+      icon: "icons/change.svg",
+      category: 'flowhub',
+      defaults: {
+        apiToken: {
+          value: "FLOWHUB_API_TOKEN",
+        },
+        apiTokenType: {
+          value: "env",
+        },
+      },
+
+      /*
+       * Having input would allow this to be triggered by a cron or
+       * inject. It's possible using RED.comms but is this something
+       * that should be triggered automagically? For now, no.
+       */
+      inputs: 0,
+      outputs: 1,
+
+      label: function() {
+        return (this.name || this._def.paletteLabel);
+      },
+
+      onpaletteadd: () => {
+      },
+
+      oneditprepare: function() {
+        $("#node-input-apiToken").typedInput({
+          types:["env", "msg", "flow","global", "cred"],
+          typeField: "#node-input-apiTokenType"
+        });
+      },
+
+      oneditcancel: function() {
+      },
+
+      oneditsave: function() {
+      },
+
+      labelStyle: function() {
+        return this.name?"node_label_italic":"";
+      },
+
+      button: {
+        enabled: function() {
+          return !this.changed
+        },
+
+        onclick: function () {
+          if (this.changed) {
+            return RED.notify(RED._("notification.warning", {
+              message: RED._("notification.warnings.undeployedChanges")
+            }), "warning");
+          }
+
+          doSubmission( this, getFlowDataFromCurrentWorkspace() )
+        }
+      },
+    });
+  })();
+</script>
+
+<script type="text/html" data-template-name="FlowHubPush">
+  <div class="form-row">
+    <label for="node-input-apiToken">
+      <i class="fa fa-tag"></i>
+      FlowHub API Token
+    </label>
+    <input type="text" id="node-input-apiToken">
+    <input type="hidden" id="node-input-apiTokenType">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="FlowHubPush">
+  <p>
+      Push current flow tab to FlowHub.org.
+      All FlowHub nodes are ignored when flows are pushed to FlowHub.
+  </p>
+</script>

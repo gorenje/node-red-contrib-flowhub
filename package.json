@@ -1,0 +1,34 @@
+{
+  "name" : "@gorenje/node-red-contrib-flowhub",
+  "version": "0.0.1",
+  "dependencies": {
+  },
+
+  "keywords": [
+    "node-red", "flowhub"
+  ],
+
+  "homepage": "https://github.com/gorenje/node-red-contrib-flowhub#README.md",
+  "license": "SEE LICENSE IN https://github.com/gorenje/node-red-contrib-flowhub/blob/main/LICENSE",
+  "author": "Gerrit Riessen <nodered@spreads-the.love> (https://spread-the.love)",
+  "engines": {
+    "node": ">=8"
+  },
+
+  "node-red" : {
+    "version": ">=2.0.0",
+    "nodes": {
+      "flowhubget":    "nodes/90-flowhub-get.js",
+      "flowhubpush":   "nodes/91-flowhub-push.js"
+    }
+  },
+
+  "description": "Flow interaction nodes.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gorenje/node-red-contrib-flowhub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gorenje/node-red-contrib-flowhub/issues"
+  }
+}
