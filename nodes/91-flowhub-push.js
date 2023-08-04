@@ -10,8 +10,6 @@ module.exports = function(RED) {
     });
 
     node.on("input", function(msg, send, done) {
-      const got = require('got');
-
       RED.util.evaluateNodeProperty(cfg.apiToken, cfg.apiTokenType,
                                     node, msg, (err, result) => {
         if (err) {
@@ -25,45 +23,47 @@ module.exports = function(RED) {
             return (obj.type != "FlowHubPull" && obj.type != "FlowHubPush")
           });
 
-          got.post( "https://api.flowhub.org/v1/flows", {
-            headers: {
-              "FlowHub-API-Version": "brownbear",
-              "Authorization": "Bearer " + access_token,
-            },
-            json: {
-              flowid: msg.flowid,
-              flowdata: flowdata,
-              flowlabel: msg.flowlabel,
-            },
-            timeout: {
-              request: 10000,
-              response: 10000
-            }
-          }).then( resp => {
+          import('got').then( (module) => {
+            module.got.post( "https://api.flowhub.org/v1/flows", {
+              headers: {
+                "FlowHub-API-Version": "brownbear",
+                "Authorization": "Bearer " + access_token,
+              },
+              json: {
+                flowid: msg.flowid,
+                flowdata: flowdata,
+                flowlabel: msg.flowlabel,
+              },
+              timeout: {
+                request: 10000,
+                response: 10000
+              }
+            }).then( resp => {
 
-            try {
-              var rst = JSON.parse( resp.body )
-            } catch (err) {
+              try {
+                var rst = JSON.parse( resp.body )
+              } catch (err) {
+                node.status({fill:"red",shape:"dot",text:"Failed"});
+                node.error(err)
+                return
+              }
+
+              node.status({
+                fill: rst.status == "nochange" ? "yellow" : "green",
+                shape:"dot",
+                text: rst.msg
+              });
+              setTimeout( function() { node.status({}) }, 1450);
+
+              send({
+                ...msg,
+                payload: rst
+              });
+
+            }).catch( err => {
               node.status({fill:"red",shape:"dot",text:"Failed"});
               node.error(err)
-              return
-            }
-
-            node.status({
-              fill: rst.status == "nochange" ? "yellow" : "green",
-              shape:"dot",
-              text: rst.msg
             });
-            setTimeout( function() { node.status({}) }, 1450);
-
-            send({
-              ...msg,
-              payload: rst
-            });
-
-          }).catch( err => {
-            node.status({fill:"red",shape:"dot",text:"Failed"});
-            node.error(err)
           });
         }
       });

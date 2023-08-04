@@ -22,7 +22,10 @@
         }
       });
 
-      var parentNode = RED.nodes.workspace(activeWorkspace)||RED.nodes.subflow(activeWorkspace);
+      var parentNode = RED.nodes.workspace(
+        activeWorkspace
+      ) || RED.nodes.subflow(activeWorkspace);
+
       nodes.unshift(parentNode);
 
       return RED.nodes.createExportableNodeSet(nodes);
