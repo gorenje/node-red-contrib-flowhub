@@ -36,19 +36,19 @@
       var activeWorkspace = RED.workspaces.active();
 
       $.ajax({
-        url: "flowhub/" + node.id,
-        type: "POST",
+        url:         "flowhub/" + node.id,
+        type:        "POST",
+        contentType: "application/json; charset=utf-8",
         data: JSON.stringify({
           flowid:    activeWorkspace,
           flowhub:   "submission from " + node.id,
           flowdata:  flowdata||{},
           flowlabel: RED.nodes.workspace(activeWorkspace).label
         }),
-        contentType: "application/json; charset=utf-8",
 
         success: function (resp) {
-          RED.notify("Submission succeed", {
-            type: "success",
+          RED.notify("Submission triggered", {
+            type: "warning",
             id: "FlowHubPush",
             timeout: 2000
           });
@@ -58,6 +58,10 @@
           if (jqXHR.status == 404) {
             RED.notify(node._("common.notification.error", {
               message: node._("common.notification.errors.not-deployed")
+            }), "error");
+          } else if (jqXHR.status == 405) {
+            RED.notify(node._("common.notification.not_allowed", {
+              message: node._("inject.errors.not_allowed")
             }), "error");
           } else if (jqXHR.status == 500) {
             RED.notify(node._("common.notification.error", {
@@ -148,6 +152,10 @@
     </label>
     <input type="text" id="node-input-apiToken">
     <input type="hidden" id="node-input-apiTokenType">
+  </div>
+
+  <div class="form-row">
+      Api Token can be obtained <a style="color: blue;" href="mailto:api.token@flowhub.org?subject=API%20Token%20Request">upon request &nbsp;<i class="fa fa-paper-plane-o"></i></a>.
   </div>
 </script>
 

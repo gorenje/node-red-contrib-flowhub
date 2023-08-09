@@ -43,7 +43,7 @@ module.exports = function(RED) {
               try {
                 var rst = JSON.parse( resp.body )
               } catch (err) {
-                node.status({fill:"red",shape:"dot",text:"Failed"});
+                node.status({fill:"red",shape:"dot",text:"Response Failed"});
                 node.error(err)
                 return
               }
@@ -53,7 +53,13 @@ module.exports = function(RED) {
                 shape:"dot",
                 text: rst.msg
               });
-              setTimeout( function() { node.status({}) }, 1450);
+              setTimeout( function() {
+                node.status({
+                  fill: "green",
+                  shape:"dot",
+                  text: rst.url
+                })
+              }, 1450);
 
               send({
                 ...msg,
@@ -61,8 +67,16 @@ module.exports = function(RED) {
               });
 
             }).catch( err => {
-              node.status({fill:"red",shape:"dot",text:"Failed"});
-              node.error(err)
+              if ( err.toString().includes("Response code 405") ) {
+                node.status({
+                  fill:"yellow",
+                  shape:"dot",
+                  text:"API Token missing/incorrect"
+                });
+              } else {
+                node.status({fill:"red",shape:"dot",text:"Failed"});
+                node.error(err)
+              }
             });
           });
         }
