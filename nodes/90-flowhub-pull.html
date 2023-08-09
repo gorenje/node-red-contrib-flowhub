@@ -1,14 +1,28 @@
 <script type="text/javascript">
  (function(){
-   function flowHubUpdateFlows() {
+   function flowHubUpdateFlows(cb=null) {
      $.get( "https://api.flowhub.org/v1/flows?cb=" + new Date(), (e,d) => {
-       var content = [];
+       var treeListItems = [];
 
        Object.keys( e.data ).forEach( function(key) {
-         content.push( key + ": " + e.data[key].name );
+         treeListItems.push( {
+           label:    e.data[key].name,
+           icon:     "fa fa-eye",
+           flowid:   key,
+           sublabel: key,
+           selected: false,
+           checkbox: false,
+           children: undefined
+         });
        });
 
-       $('#node-input-allflows').val( content.join("\n") );
+       if ( cb ) {
+         treeListItems.sort( (a,b) => {
+           return a.label < b.label ? -1 : 1;
+         });
+
+         cb(treeListItems)
+       };
      });
    };
 
@@ -28,14 +42,67 @@
      onpaletteadd: () => {
      },
 
+     oneditresize: function(size) {
+       this._resize();
+     },
+
      oneditprepare: function() {
-       flowHubUpdateFlows();
+       var dirList = $("#node-input-flowhubpull-target-container-div").css({
+        width: "100%",
+        height: "100%"
+       }).treeList(
+         {
+           multi:false
+         }
+       ).on('treelistselect', function(event, item) {
+         if ( item.flowid ) {
+           $('#node-input-flowid').val(item.flowid);
+         }
+       });
+       var items = [];
+
+       this._resize = function() {
+         var rows = $("#dialog-form>div:not(.node-input-target-list-row)");
+         var height = $("#dialog-form").height();
+         for (var i=0;i<rows.length;i++) {
+           height -= $(rows[i]).outerHeight(true);
+         }
+         var editorRow = $("#dialog-form>div.node-input-target-list-row");
+         editorRow.css("height",height+"px");
+       };
+
+       var search = $("#node-input-flowhubpull-target-filter").searchBox({
+         style: "compact",
+         delay: 300,
+         change: function() {
+           var val = $(this).val().trim().toLowerCase();
+           if (val === "") {
+             dirList.treeList("filter", null);
+             search.searchBox("count","");
+           } else {
+             var count = dirList.treeList("filter", function(item) {
+               return item.label.toLowerCase().indexOf(val) > -1 || item.sublabel.toLowerCase().indexOf(val) > -1
+             });
+             search.searchBox("count",count+" / "+items.length);
+           }
+         }
+       });
+
+
+       flowHubUpdateFlows((treeListItems) => {
+         items = treeListItems;
+         dirList.treeList('data', treeListItems);
+       });
 
        $('#node-input-refresh-list-but').on('click', function(e) {
          e.preventDefault();
-         $('#node-input-allflows').val("");
 
-         setTimeout( () => { flowHubUpdateFlows() }, 500);
+         setTimeout( () => {
+           flowHubUpdateFlows((treeListItems) => {
+             items = treeListItems;
+             dirList.treeList('data', treeListItems);
+           });
+         }, 300);
        });
 
        $("#node-input-import-flow-but").on("click", function(e) {
@@ -88,12 +155,11 @@
 
 <script type="text/html" data-template-name="FlowHubPull">
     <div class="form-row">
-        <label for="node-input-flowid">
-            <i class="fa fa-tag"></i>
-            <span>FlowId</span>
-        </label>
         <input type="text" id="node-input-flowid"
+               style="display:inline-block; width:70%px; vertical-align:baseline;"
                placeholder="FlowId to Import">
+        <button id="node-input-import-flow-but"
+                class="red-ui-button">Import Flow</button>
     </div>
 
     <div class="form-row">
@@ -105,21 +171,17 @@
     </div>
 
     <div class="form-row node-input-target-row">
-        <button id="node-input-import-flow-but"
-                class="red-ui-button">Import Flow</button>
         <button id="node-input-refresh-list-but"
                 class="red-ui-button">Refresh</button>
     </div>
 
-    <div class="form-row">
-      Copy the flow id into the field and press import to pull flows
-      from FlowHub.
-    </div>
+    <div class="form-row node-input-target-row node-input-target-list-row"
+         style="position: relative; min-height: 100px">
+        <div style="position: absolute; top: -30px; right: 0px;">
+            <input type="text" id="node-input-flowhubpull-target-filter">
+        </div>
 
-    <div class="form-row">
-        <textarea id="node-input-allflows"
-                  style="width: 425px; height: 420px;">
-        </textarea>
+        <div id="node-input-flowhubpull-target-container-div"></div>
     </div>
 </script>
 
