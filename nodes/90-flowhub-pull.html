@@ -45,7 +45,7 @@
      },
 
      oneditresize: function(size) {
-       this._resize();
+       if ( this._resize ) { this._resize(); };
      },
 
      oneditprepare: function() {
@@ -67,7 +67,7 @@
 
        var items = [];
 
-       if ( this._config.flowid ) {
+       if ( this._config && this._config.flowid ) {
          setTimeout( () => {
            $('#flowhubpull-view-flow-link').attr(
              'href', 'https://flowhub.org/f/' + $('#node-input-flowid').val()
