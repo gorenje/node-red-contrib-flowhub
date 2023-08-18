@@ -12,9 +12,78 @@ module.exports = function(RED) {
     node.on("input", function(msg, send, done) {
       RED.util.evaluateNodeProperty(cfg.apiToken, cfg.apiTokenType,
                                     node, msg, (err, result) => {
-        if (err) {
-          node.status({fill:"red",shape:"dot",text:"Failed"});
-          node.error(err)
+        if (err || result.trim() == "") {
+          if ( cfg.name.trim() == "" || cfg.email.trim() == "" ) {
+            node.status({
+              fill:"red",
+              shape:"dot",
+              text:"Failed, no API TOKEN provided nor email or name."
+            });
+
+            node.error({...msg, error: err})
+            return;
+          }
+
+          // remove flowhub nodes from the submission
+          var flowdata = msg.flowdata.filter(function(obj) {
+            return (obj.type != "FlowHubPull" && obj.type != "FlowHubPush")
+          });
+
+          import('got').then( (module) => {
+            module.got.post( "https://api.flowhub.org/v1/flows", {
+              headers: {
+                "FlowHub-API-Version": "brownbear",
+                "X-Name": cfg.name,
+                "X-Email": cfg.email,
+              },
+              json: {
+                flowid: msg.flowid,
+                flowdata: flowdata,
+                flowlabel: msg.flowlabel,
+              },
+              timeout: {
+                request: 10000,
+                response: 10000
+              }
+            }).then( resp => {
+
+              try {
+                var rst = JSON.parse( resp.body )
+              } catch (err) {
+                node.status({fill:"red",shape:"dot",text:"Response Failed"});
+                node.error({...msg, error: err})
+                return
+              }
+
+              node.status({
+                fill: rst.status == "ok" ? "yellow" : "red",
+                shape:"dot",
+                text: rst.msg
+              });
+
+              setTimeout( function() {
+                node.status({})
+              }, 4500);
+
+
+              send({
+                ...msg,
+                payload: rst
+              });
+
+            }).catch( err => {
+              if ( err.toString().includes("Response code 405") ) {
+                node.status({
+                  fill:"yellow",
+                  shape:"dot",
+                  text:"Email/Name not supplied or allowed."
+                });
+              } else {
+                node.status({fill:"red",shape:"dot",text:"Failed"});
+                node.error({...msg, error: err})
+              }
+            });
+          });
         } else {
           var access_token = result;
 

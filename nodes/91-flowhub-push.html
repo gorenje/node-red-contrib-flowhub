@@ -91,6 +91,8 @@
         apiTokenType: {
           value: "env",
         },
+        name: { value: "" },
+        email: { email: "" },
       },
 
       /*
@@ -159,18 +161,85 @@
   </div>
 
   <div class="form-row">
+      Alternatively provide your email and full name to submit the current flow.<br>
+      All submissions will be reviewed at GitHub and either merged or dropped.<br>
+      Your <b>email and name</b> will be attached to the commit added to <br>
+      the <a style="color: blue;" target="_blank" href="https://github.com/gorenje/flows.flowhub.org">FlowHub repository <i class="fa fa-external-link"></i></a>
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-email">
+      <i class="fa fa-tag"></i>
+      Email
+    </label>
+    <input type="text" id="node-input-email"
+           placeholder="john.smith@example.com">
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-name">
+      <i class="fa fa-tag"></i>
+      Name
+    </label>
+    <input type="text" id="node-input-name"
+           placeholder="Firstname Surname">
+  </div>
+
+  <div class="form-row">
+      All submissions must be verified by email: after submission you<br>
+      will recieve an email to <b>confirm your submission</b>.
+  </div>
+
+  <div class="form-row">
+      <b>License:</b><br><br>
       All flows submitted are licensed under a copyleft <a style="color: blue;" target="_blank" href="https://raw.githubusercontent.com/gorenje/flows.flowhub.org/main/LICENSE">license <i class="fa fa-external-link"></i></a>,<br>
       that grants complete do-anything-but-not-evil permission to the user<br>
       and provides no warranty in case of failure nor guarantee of success.
   </div>
+
 </script>
 
 <script type="text/html" data-help-name="FlowHubPush">
   <p>
       Push current flow tab to FlowHub.org.
       FlowHub nodes are ignored when flow-tabs are pushed to FlowHub.
-      Flow tabs are exported from the frontend, this means non-deployed
-      versions for flow tabs are exported. Frontend-only changes are
-      exported.
+      Flow tabs are exported as they <b>are in the editor</b>. What you see
+      is what you export, the deployed flow might differ. This allows flows to
+      be modified <b>without</b> having to be deployed.
+  </p>
+
+  <h3>Outputs</h3>
+  <dl class="message-properties">
+      <dt>payload
+          <span class="property-type">object</span>
+      </dt>
+      <dd>the result of submission to FlowHub. Contains nothing of major
+          interest.</dd>
+  </dl>
+
+  <h3>Details</h3>
+  <p>
+      FlowHubPush is the twin to the FlowHubPull node and is responsible for
+      uploading the current flow tab to FlowHub. The Flow tab ID is used as
+      identifier. The current flow tab in which the FlowHubPush node is
+      located will be uploaded.
+  </p>
+  <p>
+      FlowHubPush can be dragged into the flow, the button can be pressed to
+      push the flow to FlowHub. Although for the button to be active, the
+      flow has to be deployed at least once.
+  </p>
+  <p>
+      Documentation on the flow should be included in the info box of the
+      flow. Double click on the flow tab opens the property window and
+      that's the documentation that will be hosted at FlowHub. Please provide
+      documentation otherwise or a flow that is so simple to understand
+      that it requires no documentation!
+  </p>
+
+  <p>
+      Submission can either be done using an API token or using an email
+      and full name. See the property tab for details on the usage of this
+      service.
   </p>
 </script>

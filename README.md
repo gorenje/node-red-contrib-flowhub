@@ -2,9 +2,11 @@
 
 **Work In Progress**
 
+**Update**: Experimental submission is now possible using email & full-name. Pleae be aware that this service is *experimental* so don't expect too much.
+
 These are the Node-RED nodes that interact with [FlowHub.org](https://flowhub.org).
 
-[FlowHub.org](https://FlowHub.org) is an first attempt to provide a gist-like service for Node-RED.
+[FlowHub.org](https://FlowHub.org) is an experimental first attempt to provide a gist/pastebin-like service for Node-RED.
 
 The aim is to make it easy to share flow-tabs amongst Node-RED developers.
 
@@ -24,8 +26,10 @@ By exporting any flows you accept the license as described below.
 
 The entire flow-tab is exported to FlowHub.org, so beware what you export.
 
+Pushing flows can now be done using your email and name, no API token is necessary. Be aware that email verification is necessary for **every** submission.
+
 ## License
 
 All flows found here are licensed under the [don't do evil license](https://cdn.openmindmap.org/LICENSE.txt).
 
-**Usage of FlowHub.org implies an adherence to that license.**.
+**Usage of FlowHub.org implies adherence to that license.**.
