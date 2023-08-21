@@ -1,12 +1,14 @@
 <script type="text/javascript">
  (function(){
    function flowHubUpdateFlows(cb=null) {
-     $.get( "https://api.flowhub.org/v1/flows?cb=" + new Date(), (e,d) => {
+     $.get(
+       "https://api.flowhub.org/v1/flows?cb=" + new Date()
+     ).done( (resp) => {
        var treeListItems = [];
 
-       Object.keys( e.data ).forEach( function(key) {
+       Object.keys( resp.data ).forEach( function(key) {
          treeListItems.push( {
-           label:    e.data[key].name,
+           label:    resp.data[key].name,
            icon:     "fa fa-eye",
            flowid:   key,
            sublabel: key,
