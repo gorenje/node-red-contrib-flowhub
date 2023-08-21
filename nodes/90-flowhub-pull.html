@@ -23,6 +23,25 @@
 
          cb(treeListItems)
        };
+     }).fail( (e) => {
+       var msg = "";
+
+       if ( e.state() == "rejected" ) {
+         msg = "<p>Failed to retrieve FlowHub catalogue, request blocked.</p>"+
+               "<p>AdBlocker or uBlock might have prevented request.</p>"+
+               "<p>Please check browser console for more details.</p>";
+       } else {
+         msg = "<p>Failed to retrieve FlowHub catalogue.</p>" +
+               "<p>Check browser console for more details.</p>";
+       }
+
+       console.warn("Error loading https://api.flowhub.org/v1/flows:",e);
+       RED.notify(msg, {
+           type: "error",
+           id: "FlowHubPull",
+           timeout: 4000
+         }
+       );
      });
    };
 
