@@ -10,6 +10,11 @@ module.exports = function(RED) {
     });
 
     node.on("input", function(msg, send, done) {
+      // remove flowhub nodes from the submission
+      var flowdata = msg.flowdata.filter(function(obj) {
+        return (obj.type != "FlowHubPull" && obj.type != "FlowHubPush")
+      });
+
       RED.util.evaluateNodeProperty(cfg.apiToken, cfg.apiTokenType,
                                     node, msg, (err, result) => {
         if (err || result.trim() == "") {
@@ -24,11 +29,9 @@ module.exports = function(RED) {
             return;
           }
 
-          // remove flowhub nodes from the submission
-          var flowdata = msg.flowdata.filter(function(obj) {
-            return (obj.type != "FlowHubPull" && obj.type != "FlowHubPush")
-          });
-
+          /*
+           * Email based submission.
+           */
           import('got').then( (module) => {
             module.got.post( "https://api.flowhub.org/v1/flows", {
               headers: {
@@ -65,10 +68,10 @@ module.exports = function(RED) {
                 node.status({})
               }, 4500);
 
-
               send({
                 ...msg,
-                payload: rst
+                payload: flowdata,
+                result: rst
               });
 
             }).catch( err => {
@@ -85,12 +88,10 @@ module.exports = function(RED) {
             });
           });
         } else {
+          /*
+           * Access token submission.
+           */
           var access_token = result;
-
-          // remove flowhub nodes from the submission
-          var flowdata = msg.flowdata.filter(function(obj) {
-            return (obj.type != "FlowHubPull" && obj.type != "FlowHubPush")
-          });
 
           import('got').then( (module) => {
             module.got.post( "https://api.flowhub.org/v1/flows", {
@@ -122,6 +123,7 @@ module.exports = function(RED) {
                 shape:"dot",
                 text: rst.msg
               });
+
               setTimeout( function() {
                 node.status({
                   fill: "green",
@@ -132,7 +134,8 @@ module.exports = function(RED) {
 
               send({
                 ...msg,
-                payload: rst
+                payload: flowdata,
+                result: rst
               });
 
             }).catch( err => {

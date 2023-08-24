@@ -2,7 +2,7 @@
  (function(){
    function flowHubUpdateFlows(cb=null) {
      $.get(
-       "https://api.flowhub.org/v1/flows?cb=" + new Date()
+       "https://api.flowhub.org/v1/flows?cb=" + new Date().getTime()
      ).done( (resp) => {
        var treeListItems = [];
 
@@ -55,8 +55,8 @@
        notab: { value: false },
        flowid: { value: "" }
      },
-     inputs: 0,
-     outputs: 0,
+     inputs: 1,
+     outputs: 1,
 
      label: function() {
        return (this.name || this._def.paletteLabel);
@@ -123,7 +123,6 @@
          }
        });
 
-
        flowHubUpdateFlows((treeListItems) => {
          items = treeListItems;
          dirList.treeList('data', treeListItems);
@@ -156,8 +155,9 @@
 
          $.get( "https://api.flowhub.org/v1/flows/" +
                 $('#node-input-flowid').val() +
-                "?cb=" + new Date(), function(e,d) {
+                "?cb=" + new Date().getTime(), function(e,d) {
                   RED.clipboard.import();
+
                   setTimeout( () => {
                     var content = e;
 
