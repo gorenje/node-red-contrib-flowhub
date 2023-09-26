@@ -33,3 +33,7 @@ Pushing flows can now be done using your email and name, no API token is necessa
 All flows found here are licensed under the [don't do evil license](https://cdn.openmindmap.org/LICENSE.txt).
 
 **Usage of FlowHub.org implies adherence to that license.**.
+
+## FlowHub
+
+The flow that maintains this [codebase](https://flowhub.org/f/4a831589774ecb04).
