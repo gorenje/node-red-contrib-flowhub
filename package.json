@@ -9,7 +9,7 @@
     "node-red", "flowhub"
   ],
 
-  "homepage": "https://github.com/gorenje/node-red-contrib-flowhub#README.md",
+  "homepage": "https://flowhub.org",
   "license": "SEE LICENSE IN https://github.com/gorenje/node-red-contrib-flowhub/blob/main/LICENSE",
   "author": "Gerrit Riessen <nodered@spreads-the.love> (https://spread-the.love)",
   "engines": {
@@ -24,7 +24,7 @@
     }
   },
 
-  "description": "Flow interaction nodes.",
+  "description": "FlowHub interaction nodes.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gorenje/node-red-contrib-flowhub.git"
