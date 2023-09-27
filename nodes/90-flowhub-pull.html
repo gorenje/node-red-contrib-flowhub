@@ -52,14 +52,16 @@
      icon: "icons/change.svg",
      category: 'flowhub',
      defaults: {
+       name: { value: ""},
        notab: { value: false },
-       flowid: { value: "" }
+       flowid: { value: "" },
+       flowname: { value: "" }
      },
      inputs: 1,
      outputs: 1,
 
      label: function() {
-       return (this.name || this._def.paletteLabel);
+       return (this.name || this.flowname || this.flowid || this._def.paletteLabel);
      },
 
      onpaletteadd: () => {
@@ -80,6 +82,7 @@
        ).on('treelistselect', function(event, item) {
          if ( item.flowid ) {
            $('#node-input-flowid').val(item.flowid);
+           $('#node-input-flowname').val(item.label);
            $('#flowhubpull-view-flow-link').attr(
              'href', 'https://flowhub.org/f/'+item.flowid
            ).show();
@@ -195,6 +198,7 @@
                placeholder="FlowId to Import">
         <button id="node-input-import-flow-but"
                 class="red-ui-button">Import Flow</button>
+        <input type="text" id="node-input-flowname" style="display: none;">
     </div>
 
     <div class="form-row">
@@ -225,6 +229,11 @@
         hereby permission is given to use any flow for any purpose <br>
         <b>other than</b> for evil. No guarantee of purpose fulfillment<br>
         is made nor warrenty for failure - all risk is carried by the user.
+    </div>
+
+    <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name">Name</span></label>
+      <input type="text" id="node-input-name" placeholder="Name">
     </div>
 </script>
 

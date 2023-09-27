@@ -36,7 +36,7 @@
       var activeWorkspace = RED.workspaces.active();
 
       $.ajax({
-        url:         "flowhub/" + node.id,
+        url:         "FlowHubPush/" + node.id,
         type:        "POST",
         contentType: "application/json; charset=utf-8",
         data: JSON.stringify({
@@ -91,8 +91,9 @@
         apiTokenType: {
           value: "env",
         },
-        name: { value: "" },
+        fullname: { value: "" },
         email: { email: "" },
+        name: { value: "" },
       },
 
       /*
@@ -177,11 +178,11 @@
   </div>
 
   <div class="form-row">
-    <label for="node-input-name">
+    <label for="node-input-fullname">
       <i class="fa fa-tag"></i>
       Name
     </label>
-    <input type="text" id="node-input-name"
+    <input type="text" id="node-input-fullname"
            placeholder="Firstname Surname">
   </div>
 
@@ -197,6 +198,10 @@
       and provides no warranty in case of failure nor guarantee of success.
   </div>
 
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name">Name</span></label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
 </script>
 
 <script type="text/html" data-help-name="FlowHubPush">

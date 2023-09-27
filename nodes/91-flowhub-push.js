@@ -18,7 +18,7 @@ module.exports = function(RED) {
       RED.util.evaluateNodeProperty(cfg.apiToken, cfg.apiTokenType,
                                     node, msg, (err, result) => {
         if (err || result.trim() == "") {
-          if ( cfg.name.trim() == "" || cfg.email.trim() == "" ) {
+          if ( cfg.fullname.trim() == "" || cfg.email.trim() == "" ) {
             node.status({
               fill:"red",
               shape:"dot",
@@ -36,7 +36,7 @@ module.exports = function(RED) {
             module.got.post( "https://api.flowhub.org/v1/flows", {
               headers: {
                 "FlowHub-API-Version": "brownbear",
-                "X-Name": cfg.name,
+                "X-Name": cfg.fullname,
                 "X-Email": cfg.email,
               },
               json: {
@@ -158,7 +158,7 @@ module.exports = function(RED) {
 
   RED.nodes.registerType("FlowHubPush", FlowHubPushFunctionality);
 
-  RED.httpAdmin.post("/flowhub/:id",
+  RED.httpAdmin.post("/FlowHubPush/:id",
                      RED.auth.needsPermission("flowhub.write"),
                      (req,res) => {
                        var node = RED.nodes.getNode(req.params.id);
