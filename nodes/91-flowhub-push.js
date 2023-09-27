@@ -12,7 +12,7 @@ module.exports = function(RED) {
     node.on("input", function(msg, send, done) {
       // remove flowhub nodes from the submission
       var flowdata = msg.flowdata.filter(function(obj) {
-        return (obj.type != "FlowHubPull" && obj.type != "FlowHubPush")
+        return ( (obj.type != "FlowHubPull" || (obj.type == "FlowHubPull" && cfg.incflowhubpull)) && obj.type != "FlowHubPush" )
       });
 
       RED.util.evaluateNodeProperty(cfg.apiToken, cfg.apiTokenType,
@@ -22,7 +22,7 @@ module.exports = function(RED) {
             node.status({
               fill:"red",
               shape:"dot",
-              text:"Failed, no API TOKEN provided nor email or name."
+              text:"Failed, no API TOKEN provided nor email and name."
             });
 
             node.error({...msg, error: err})
