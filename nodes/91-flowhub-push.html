@@ -54,9 +54,12 @@
             id: "FlowHubPush",
             timeout: 2000
           });
+
+          $('#flowhubpush-view-flow-link').attr('href', "https://flowhub.org/f/" + activeWorkspace).show();
         },
 
         error: function (jqXHR, textStatus, errorThrown) {
+          $('#flowhubpush-view-flow-link').attr('href', "").hide()
           if (jqXHR.status == 404) {
             RED.notify("Node has not yet been deployed, please deploy.", "error");
           } else if (jqXHR.status == 405) {
@@ -210,6 +213,10 @@
   <div class="form-row">
       <button id="node-input-push-flow-but"
               class="red-ui-button">Push Flow-Tab to FlowHub</button>
+  </div>
+
+  <div class="form-row">
+      <a id="flowhubpush-view-flow-link" style="color: blue; display: none;" target="_blank" href="">View Flow <i class="fa fa-external-link"></i></a>
   </div>
 </script>
 
