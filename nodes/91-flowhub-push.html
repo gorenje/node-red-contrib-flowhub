@@ -39,11 +39,13 @@
         url:         "FlowHubPush/" + node.id,
         type:        "POST",
         contentType: "application/json; charset=utf-8",
+
         data: JSON.stringify({
-          flowid:    activeWorkspace,
-          flowhub:   "submission from " + node.id,
-          flowdata:  flowdata||{},
-          flowlabel: RED.nodes.workspace(activeWorkspace).label
+          flowid:         activeWorkspace,
+          flowhub:        "submission from " + node.id,
+          flowdata:       flowdata||{},
+          flowlabel:      RED.nodes.workspace(activeWorkspace).label,
+          incflowhubpull: $("#node-input-incflowhubpull").is(":checked")
         }),
 
         success: function (resp) {
