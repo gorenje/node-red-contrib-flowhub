@@ -45,8 +45,8 @@ module.exports = function(RED) {
                 flowlabel: msg.flowlabel,
               },
               timeout: {
-                request: 10000,
-                response: 10000
+                request: 25000,
+                response: 25000
               }
             }).then( resp => {
 
