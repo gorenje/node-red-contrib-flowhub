@@ -55,7 +55,8 @@
        name: { value: ""},
        notab: { value: false },
        flowid: { value: "" },
-       flowname: { value: "" }
+       flowname: { value: "" },
+       flowrevision: { value: "" }
      },
      inputs: 1,
      outputs: 1,
@@ -158,7 +159,8 @@
 
          $.get( "https://api.flowhub.org/v1/flows/" +
                 $('#node-input-flowid').val() +
-                "?cb=" + new Date().getTime(), function(e,d) {
+                "?cb=" + new Date().getTime() + "&v=" + 
+                $('#node-input-flowrevision').val(), function(e,d) {
                   RED.clipboard.import();
 
                   setTimeout( () => {
@@ -232,8 +234,17 @@
     </div>
 
     <div class="form-row">
+      <label for="node-input-flowrevision"><i class="fa fa-tag"></i> Revision</label>
+      <input type="text" id="node-input-flowrevision" placeholder="Revision"/>
+    </div>
+    
+    <div class="form-row">
+      <hr/>
+    </div>
+
+    <div class="form-row">
       <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name">Name</span></label>
-      <input type="text" id="node-input-name" placeholder="Name">
+      <input type="text" id="node-input-name" placeholder="Name"/>
     </div>
 </script>
 

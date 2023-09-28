@@ -15,13 +15,16 @@ module.exports = function(RED) {
         import('got').then( (module) => {
           module.got.get( "https://api.flowhub.org/v1/flows/" + (
             cfg.flowid || msg.flowid
-          ) + "?cb=" + new Date().getTime(), {
+          ) + "?cb=" + new Date().getTime() + "&v=" + (
+            cfg.flowrevision || msg.flowrevision
+          ), 
+          {
             headers: {
               "FlowHub-API-Version": "brownbear",
             },
             timeout: {
-              request: 10000,
-              response: 10000
+              request: 25000,
+              response: 25000
             }
           }).then( resp => {
 
