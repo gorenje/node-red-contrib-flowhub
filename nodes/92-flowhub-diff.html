@@ -69,6 +69,7 @@
                 label:    nde.details.name || nde.details.type,
                 icon:     "fa fa-cross",
                 class:    "",
+                diffcontent: JSON.stringify(nde.details)
                 sublabel: nde.type,
                 selected: false,
                 checkbox: false,
@@ -84,6 +85,7 @@
                 label:    nde.details.name || nde.details.type,
                 icon:     "fa fa-cross",
                 class:    "",
+                diffcontent: JSON.stringify(nde.details),
                 sublabel: "tab - " + nde.type,
                 selected: false,
                 checkbox: false,
@@ -122,7 +124,7 @@
           });
 
           if ( items.length == 0 ) {
-            $('#node-input-blogchanges-target-container-div').html("No changes")
+            $('#node-input-flowhubdiff-target-container-div').html("No changes")
           } else {
             node.dirList.treeList('data',items);
           }
@@ -192,7 +194,7 @@
           editorRow.css("height",height+"px");
         };
 
-        that.dirList = $("#node-input-blogchanges-target-container-div").css({
+        that.dirList = $("#node-input-flowhubdiff-target-container-div").css({
           width: "100%",
           height: "200px"
         }).treeList(
@@ -200,6 +202,9 @@
             multi:true
           }
         ).on("treelistitemmouseover", function(e, item) {
+          if ( item.diffcontent ) {
+            $('#node-input-flowhubdiff-diffcontainer').html( item.diffcontent)
+          }
 
           if ( item.node) {
             RED.workspaces.show(item.node.z,false,false,true);
@@ -209,12 +214,16 @@
           }
         }).on("treelistitemmouseout", function(e, item) {
 
+          $('#node-input-flowhubdiff-diffcontainer').html("")
           if ( item.node ) {
             item.node.highlighted = false;
             item.node.dirty = true;
             RED.view.redraw();
           }
         }).on('treelistselect', function(event, item) {
+          if ( item.diffcontent ) {
+            $('#node-input-flowhubdiff-diffcontainer').html(item.diffcontent)
+          }
           if ( item.node ) {
             RED.workspaces.show(item.node.z,false,false,true);
             $('#node-dialog-cancel').trigger('click')
@@ -229,7 +238,7 @@
           }
         });
 
-        var search = $("#node-input-blogchanges-target-filter").searchBox({
+        var search = $("#node-input-flowhubdiff-target-filter").searchBox({
           style: "compact",
           delay: 300,
           change: function() {
@@ -285,13 +294,18 @@
 
   <div class="form-row node-input-target-row node-input-target-list-row" style="position: relative; min-height: 100px">
     <div style="position: absolute; top: -30px; right: 0;">
-      <input type="text" id="node-input-blogchanges-target-filter">
+      <input type="text" id="node-input-flowhubdiff-target-filter">
     </div>
   
-    <div id="node-input-blogchanges-target-container-div"></div>
+    <div id="node-input-flowhubdiff-target-container-div" style="min-height: 100px"></div>
   </div>
 
+  <div class="form-row" style="position: relative; min-height: 100px">
+    <div id="node-input-flowhubdiff-diffcontainer"></div>
+  </div>
 </script>
 
 <script type="text/html" data-help-name="FlowHubDiff">
+<p>Compare the current version of a flow with the latest version at FlowHub.org</p>
+This node can be used to compare flows being modified locally with those stored on FlowHub. Difference are highlighted in the property panel.
 </script>
