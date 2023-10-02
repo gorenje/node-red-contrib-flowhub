@@ -1,0 +1,297 @@
+<script type="text/javascript">
+  (function(){
+
+    function getFlowDataFromCurrentWorkspace() {
+      /******
+       ** Code taken from Node-RED code base:
+       **
+       ** https://github.com/node-red/node-red/blob/e8ddee24a9944e57d186f02b081295c56a45b67c/packages/node_modules/%40node-red/editor-client/src/js/ui/clipboard.js#L710-L723
+       **
+       **/
+      var activeWorkspace = RED.workspaces.active();
+      var nodes = RED.nodes.groups(activeWorkspace);
+
+      nodes = nodes.concat(RED.nodes.junctions(activeWorkspace));
+      nodes = nodes.concat(RED.nodes.filterNodes({z:activeWorkspace}));
+
+      RED.nodes.eachConfig(function(n) {
+        if (n.z === RED.workspaces.active() && n._def.hasUsers === false) {
+          // Grab any config nodes scoped to this flow that don't
+          // require any flow-nodes to use them
+          nodes.push(n);
+        }
+      });
+
+      var parentNode = RED.nodes.workspace(
+        activeWorkspace
+      ) || RED.nodes.subflow(activeWorkspace);
+
+      nodes.unshift(parentNode);
+
+      return RED.nodes.createExportableNodeSet(nodes);
+    }
+
+    function doSubmission(node, flowdata) {
+
+      var activeWorkspace = RED.workspaces.active();
+      
+      RED.notify("Submission triggered", {
+          type: "warning",
+          id: "FlowHubDiff",
+          timeout: 2000
+      });
+
+      $.ajax({
+        url:         "FlowHubDiff/" + node.id,
+        type:        "POST",
+        contentType: "application/json; charset=utf-8",
+
+        data: JSON.stringify({
+          flowid:         activeWorkspace,
+          flowhub:        "submission from " + node.id,
+          flowdata:       flowdata||{},
+          flowlabel:      RED.nodes.workspace(activeWorkspace).label,
+          incflowhubpull: $("#node-input-incflowhubpull").is(":checked")
+        }),
+
+        success: function (resp) {
+          
+          console.log( resp );
+
+          var items = [];
+          var nodeItemMap = {};
+
+          resp.changes.forEach( function (nde) {
+            var nId = nde.id;
+
+            if ( nde.type == "deleted") {
+              nodeItemMap[nId] = {
+                label:    nde.details.name || nde.details.type,
+                icon:     "fa fa-cross",
+                class:    "",
+                sublabel: nde.type,
+                selected: false,
+                checkbox: false,
+                children: undefined
+              };
+
+              items.push(nodeItemMap[nId]);
+              return;
+            }
+
+            if ( nde.details.type == "tab") {
+              nodeItemMap[nId] = {
+                label:    nde.details.name || nde.details.type,
+                icon:     "fa fa-cross",
+                class:    "",
+                sublabel: "tab - " + nde.type,
+                selected: false,
+                checkbox: false,
+                children: undefined
+              };
+
+              items.push(nodeItemMap[nId]);
+              return;
+            }
+
+            var n = RED.nodes.node(nId);
+            var nodeDef = RED.nodes.getType(n.type);
+            var label;
+
+            if (nodeDef) {
+              var l = nodeDef.label;
+              label = (typeof l === "function" ? l.call(n) : l)||"";
+            }
+
+            if (!nodeDef || !label) {
+              label = n.type;
+            }
+
+            nodeItemMap[n.id] = {
+              node:     n,
+              label:    label,
+              icon:     n.d ? "fa fa-eye-slash" : "fa fa-eye",
+              class:    "",
+              sublabel: nde.type,
+              selected: false,
+              checkbox: false,
+              children: undefined
+            };
+
+            items.push(nodeItemMap[n.id]);
+          });
+
+          if ( items.length == 0 ) {
+            $('#node-input-blogchanges-target-container-div').html("No changes")
+          } else {
+            node.dirList.treeList('data',items);
+          }
+        },
+
+        error: function (jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 404) {
+            RED.notify("Node has not yet been deployed, please deploy.", "error");
+          } else if (jqXHR.status == 405) {
+            RED.notify("Not Allowed.", "error");
+          } else if (jqXHR.status == 500) {
+            RED.notify(node._("common.notification.error", {
+              message: node._("inject.errors.failed")
+            }), "error");
+          } else if (jqXHR.status == 0) {
+            RED.notify(node._("common.notification.error", {
+              message: node._("common.notification.errors.no-response")
+            }), "error");
+          } else {
+            RED.notify(node._("common.notification.error", {
+              message: node._("common.notification.errors.unexpected", {
+                status: jqXHR.status, message: textStatus }) }), "error");
+          }
+        }
+      });
+    }
+
+    RED.nodes.registerType('FlowHubDiff',{
+      color: '#44eeff',
+      icon: "icons/diff.svg",
+      category: 'flowhub',
+      defaults: {
+        name: { value: "" },
+        incflowhubpull: { value: false },
+      },
+
+      /*
+       * Having input would allow this to be triggered by a cron or
+       * inject. It's possible using RED.comms but is this something
+       * that should be triggered automagically? For now, no.
+       */
+      inputs: 0,
+      outputs: 0,
+
+      label: function() {
+        return (this.name || this._def.paletteLabel);
+      },
+
+      onpaletteadd: () => {
+      },
+
+      oneditprepare: function() {
+        var that = this;
+
+        $('#node-input-push-flow-but').on('click', (e) => {
+          e.preventDefault();
+          doSubmission( that, getFlowDataFromCurrentWorkspace() )
+        })
+
+        this._resize = function() {
+          var rows = $("#dialog-form>div:not(.node-input-target-list-row)");
+          var height = $("#dialog-form").height();
+          for (var i=0;i<rows.length;i++) {
+            height -= $(rows[i]).outerHeight(true);
+          }
+          var editorRow = $("#dialog-form>div.node-input-target-list-row");
+          editorRow.css("height",height+"px");
+        };
+
+        that.dirList = $("#node-input-blogchanges-target-container-div").css({
+          width: "100%",
+          height: "200px"
+        }).treeList(
+          {
+            multi:true
+          }
+        ).on("treelistitemmouseover", function(e, item) {
+
+          if ( item.node) {
+            RED.workspaces.show(item.node.z,false,false,true);
+            item.node.highlighted = true;
+            RED.view.reveal(item.node.id,true)
+            RED.view.redraw();
+          }
+        }).on("treelistitemmouseout", function(e, item) {
+
+          if ( item.node ) {
+            item.node.highlighted = false;
+            item.node.dirty = true;
+            RED.view.redraw();
+          }
+        }).on('treelistselect', function(event, item) {
+          if ( item.node ) {
+            RED.workspaces.show(item.node.z,false,false,true);
+            $('#node-dialog-cancel').trigger('click')
+
+            var itm = item;
+            setTimeout( () => {
+              RED.sidebar.info.show();
+              RED.view.redraw();
+              RED.view.select(itm.node.id);
+              RED.actions.invoke("core:move-selection-to-front");
+            }, 735 );
+          }
+        });
+
+        var search = $("#node-input-blogchanges-target-filter").searchBox({
+          style: "compact",
+          delay: 300,
+          change: function() {
+            var val = $(this).val().trim().toLowerCase();
+            if (val === "") {
+              that.dirList.treeList("filter", null);
+              search.searchBox("count","");
+            } else {
+              var count = that.dirList.treeList("filter", function(item) {
+                return item.label.toLowerCase().indexOf(val) > -1 || item.node.type.toLowerCase().indexOf(val) > -1
+              });
+              search.searchBox("count",count+" / "+items.length);
+            }
+          }
+        });
+      },
+
+      oneditcancel: function() {
+      },
+
+      oneditsave: function() {
+      },
+
+      labelStyle: function() {
+        return this.name?"node_label_italic":"";
+      },
+    });
+  })();
+</script>
+
+<script type="text/html" data-template-name="FlowHubDiff">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name">Name</span></label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+
+
+  <div class="form-row">
+    <label for="node-input-incflowhubpull" style="min-width: 200px;">
+              <span>Include FlowHubPull nodes?</span>
+    </label>
+    <input type="checkbox" id="node-input-incflowhubpull" style="display:inline-block; width:15px; vertical-align:baseline;">
+  </div>
+
+  <div class="form-row">
+      <button id="node-input-push-flow-but"
+              class="red-ui-button">Push Flow-Tab to FlowHub</button>
+  </div>
+
+  <div class="form-row">
+      <a id="flowhubdiff-view-flow-link" style="color: blue; display: none;" target="_blank" href="">View Flow <i class="fa fa-external-link"></i></a>
+  </div>
+
+  <div class="form-row node-input-target-row node-input-target-list-row" style="position: relative; min-height: 100px">
+    <div style="position: absolute; top: -30px; right: 0;">
+      <input type="text" id="node-input-blogchanges-target-filter">
+    </div>
+  
+    <div id="node-input-blogchanges-target-container-div"></div>
+  </div>
+
+</script>
+
+<script type="text/html" data-help-name="FlowHubDiff">
+</script>

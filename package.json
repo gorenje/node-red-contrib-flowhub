@@ -6,21 +6,22 @@
   },
 
   "keywords": [
-    "node-red", "flowhub"
+    "node-red", "flowhub", "flowsharing"
   ],
 
   "homepage": "https://flowhub.org",
-  "license": "SEE LICENSE IN https://github.com/gorenje/node-red-contrib-flowhub/blob/main/LICENSE",
+  "license": "Don't be Evil.",
   "author": "Gerrit Riessen <nodered@spreads-the.love> (https://spread-the.love)",
   "engines": {
-    "node": ">=16"
+    "node": ">=8"
   },
 
   "node-red" : {
     "version": ">=2.0.0",
     "nodes": {
       "flowhubpull":   "nodes/90-flowhub-pull.js",
-      "flowhubpush":   "nodes/91-flowhub-push.js"
+      "flowhubpush":   "nodes/91-flowhub-push.js",
+      "flowhubdiff":   "nodes/92-flowhub-diff.js"
     }
   },
 
