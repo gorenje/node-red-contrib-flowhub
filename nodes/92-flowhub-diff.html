@@ -155,7 +155,7 @@
 
       var activeWorkspace = RED.workspaces.active();
       
-      RED.notify("Submission triggered", {
+      RED.notify("Flow Comparison Triggered", {
           type: "warning",
           id: "FlowHubDiff",
           timeout: 2000
@@ -186,7 +186,23 @@
                 label:    nde.oldObj.name || nde.oldObj.type,
                 icon:     "fa fa-times",
                 class:    "",
-                diffcontent: JSON.stringify(nde.oldObj),
+                diffcontent: createDiff({}, nde.oldObj),
+                sublabel: nde.type,
+                selected: false,
+                checkbox: false,
+                children: undefined
+              };
+
+              items.push(nodeItemMap[nId]);
+              return;
+            }
+
+            if ( nde.type == "added") {
+              nodeItemMap[nId] = {
+                label:    nde.newObj.name || nde.newObj.type,
+                icon:     "fa fa-check",
+                class:    "",
+                diffcontent: createDiff(nde.newObj, {}),
                 sublabel: nde.type,
                 selected: false,
                 checkbox: false,
@@ -202,7 +218,7 @@
                 label:    nde.oldObj.name || nde.oldObj.type,
                 icon:     "fa fa-times",
                 class:    "",
-                diffcontent: createDiff(nde.oldObj, nde.newObj),
+                diffcontent: createDiff(nde.newObj, nde.oldObj),
                 sublabel: "tab - " + nde.type,
                 selected: false,
                 checkbox: false,
@@ -231,7 +247,7 @@
               label:    label,
               icon:     n.d ? "fa fa-eye-slash" : "fa fa-eye",
               class:    "",
-              diffcontent: createDiff(nde.oldObj, nde.newObj),
+              diffcontent: createDiff(nde.newObj, nde.oldObj),
               sublabel: nde.type,
               selected: false,
               checkbox: false,
