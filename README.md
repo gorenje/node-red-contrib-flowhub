@@ -41,6 +41,11 @@ All flows found here are licensed under the [don't do evil license](https://cdn.
 
 **Usage of FlowHub.org implies adherence to that license.**.
 
-## FlowHub
+## Artifacts
 
-The flow that maintains this [codebase](https://flowhub.org/f/4a831589774ecb04).
+- [NPMjs Package](https://www.npmjs.com/package/@gregoriusrippenstein/node-red-contrib-flowhub)
+- [Node-RED node package](https://flows.nodered.org/node/@gregoriusrippenstein/node-red-contrib-introspection)
+- [GitHub Repo](https://github.com/gorenje/node-red-contrib-flowhub)
+- The flow that maintains this [codebase](https://flowhub.org/f/4a831589774ecb04).
+
+
