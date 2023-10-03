@@ -1,6 +1,126 @@
 <script type="text/javascript">
   (function(){
 
+    function escapeHtml(string) {
+      return String(string).replace(/[&<>"'`=\/]/g, function fromEntityMap(s) {
+        return entityMap[s];
+      });
+    }
+
+    function loadScript(url, callback) {
+          var script = document.createElement("script")
+          script.type = "text/javascript";
+
+          if (script.readyState) {  // only required for IE <9
+              script.onreadystatechange = function () {
+                  if (script.readyState === "loaded" || script.readyState === "complete") {
+                      script.onreadystatechange = null;
+                      if (callback) { callback(); }
+                  }
+              };
+          } else {  //Others
+              script.onload = function () {
+                  if (callback) { callback(); }
+              };
+          }
+
+          script.src = url;
+          document.getElementsByTagName("head")[0].appendChild(script);
+      };
+
+    var entityMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '/': '&#x2F;',
+      '`': '&#x60;',
+      '=': '&#x3D;'
+    };
+
+    var descMap = {
+      'z': "Flow Tab Id",
+      'g': "Group Id",
+      'd': "Disabled",
+    };
+
+    function attrDesc(nme) {
+      return descMap[nme] ? " <i style='font-size: 80%;'>(" + descMap[nme] + ")</i>" : "";
+    }
+
+    function createDiff(ndeV1, ndeV2) {
+      var diffDetails = [];
+
+      Object.keys(ndeV2).forEach(function (nme) {
+        if ( Object.keys(ndeV1).indexOf(nme) < 0 ) {
+          var txt = typeof ndeV2[nme] == "object" ? JSON.stringify(ndeV2[nme]) : ndeV2[nme];
+          diffDetails.push("<tr class='dv-removed'><th>" + nme + attrDesc(nme) + "</th><td><i>MISSING</i></td><td><code>" + escapeHtml(txt) + "</code></td></tr>")
+        }
+      });
+
+      Object.keys(ndeV1).forEach(function (nme) {
+        if (Object.keys(ndeV2).indexOf(nme) < 0) {
+          var txt = typeof ndeV1[nme] == "object" ? JSON.stringify(ndeV1[nme]) : ndeV1[nme];
+          diffDetails.push("<tr class='dv-added'><th>" + nme + attrDesc(nme) + "</th><td><code>" + escapeHtml(txt) +"</code></td><td><i>ADDED</i></td></tr>")
+        }
+      });
+
+      Object.keys(ndeV1).forEach(function (nme) {
+        if (Object.keys(ndeV2).indexOf(nme) > -1) {
+          if ( JSON.stringify(ndeV1[nme]) !== JSON.stringify(ndeV2[nme]) ) {
+            let span = null;
+            let diff = undefined;
+
+            try {
+              diff = Diff.diffLines(ndeV2[nme], ndeV1[nme])
+            } catch (e) {
+              diff = Diff.diffLines(JSON.stringify(ndeV2[nme],undefined,1), JSON.stringify(ndeV1[nme],undefined,1))
+            }
+            const fragment = document.createDocumentFragment();
+
+            diff.forEach((part) => {
+              // green for additions, red for deletions
+              const color = part.added ? 'green' : part.removed ? 'red' : '#040506';
+
+              span = document.createElement('pre');
+              span.setAttribute('class','dv-pre-elem');
+              span.style.color = color;
+              span.appendChild(document.createTextNode(part.value));
+              span.appendChild(document.createElement('br'));
+              fragment.appendChild(span);
+            });
+
+            var row = document.createElement('tr');
+            row.setAttribute('class',"dv-differ")
+            var cell = document.createElement('th')
+            cell.appendChild(document.createTextNode(nme))
+            if (descMap[nme]) {
+              var itl = document.createElement('i');
+              itl.style["font-size"] = "80%"
+              itl.appendChild(document.createTextNode("(" + descMap[nme]+")"))
+              cell.appendChild(itl)
+            }
+            row.append(cell);
+
+            cell = document.createElement('td')
+            cell.setAttribute('colspan', '2')
+            cell.append( fragment)
+
+            row.append(cell)
+            diffDetails.push(row.outerHTML)
+          } else {
+            diffDetails.push("<tr><th>" + nme + "</th><td><code>" + escapeHtml(ndeV1[nme]) + "</code></td><td><code>" + escapeHtml(ndeV2[nme]) + "</code></td></tr>")
+          }
+        } else {
+            diffDetails.push("<tr><th>" + nme + "</th><td><code>" + escapeHtml(ndeV1[nme]) + "</code></td><td><code>SURE NOT HAPPEN</code></td></tr>")
+        }
+      });
+      
+      return diffDetails.join("")
+    }
+
+
     function getFlowDataFromCurrentWorkspace() {
       /******
        ** Code taken from Node-RED code base:
@@ -66,10 +186,10 @@
 
             if ( nde.type == "deleted") {
               nodeItemMap[nId] = {
-                label:    nde.details.name || nde.details.type,
-                icon:     "fa fa-cross",
+                label:    nde.oldObj.name || nde.oldObj.type,
+                icon:     "fa fa-times",
                 class:    "",
-                diffcontent: JSON.stringify(nde.details)
+                diffcontent: JSON.stringify(nde.oldObj),
                 sublabel: nde.type,
                 selected: false,
                 checkbox: false,
@@ -80,12 +200,12 @@
               return;
             }
 
-            if ( nde.details.type == "tab") {
+            if ( nde.oldObj.type == "tab") {
               nodeItemMap[nId] = {
-                label:    nde.details.name || nde.details.type,
-                icon:     "fa fa-cross",
+                label:    nde.oldObj.name || nde.oldObj.type,
+                icon:     "fa fa-times",
                 class:    "",
-                diffcontent: JSON.stringify(nde.details),
+                diffcontent: createDiff(nde.oldObj, nde.newObj),
                 sublabel: "tab - " + nde.type,
                 selected: false,
                 checkbox: false,
@@ -114,6 +234,7 @@
               label:    label,
               icon:     n.d ? "fa fa-eye-slash" : "fa fa-eye",
               class:    "",
+              diffcontent: createDiff(nde.oldObj, nde.newObj),
               sublabel: nde.type,
               selected: false,
               checkbox: false,
@@ -123,6 +244,12 @@
             items.push(nodeItemMap[n.id]);
           });
 
+          if ( resp.ifurl ) {
+            $('#node-input-flowhubdiff-svgcontainer').html(
+                '<iframe width="100%" height="100%" src="' + resp.ifurl  + '" allow="clipboard-read; clipboard-write" style="border: none; min-height: 250px;"></iframe>'
+              )
+          }
+          
           if ( items.length == 0 ) {
             $('#node-input-flowhubdiff-target-container-div').html("No changes")
           } else {
@@ -174,6 +301,8 @@
       },
 
       onpaletteadd: () => {
+        /* https://cdn.openmindmap.org/thirdparty/diff.min.js */
+            loadScript("https://cdn.openmindmap.org/thirdparty/diff.min.js")        
       },
 
       oneditprepare: function() {
@@ -202,10 +331,6 @@
             multi:true
           }
         ).on("treelistitemmouseover", function(e, item) {
-          if ( item.diffcontent ) {
-            $('#node-input-flowhubdiff-diffcontainer').html( item.diffcontent)
-          }
-
           if ( item.node) {
             RED.workspaces.show(item.node.z,false,false,true);
             item.node.highlighted = true;
@@ -214,7 +339,6 @@
           }
         }).on("treelistitemmouseout", function(e, item) {
 
-          $('#node-input-flowhubdiff-diffcontainer').html("")
           if ( item.node ) {
             item.node.highlighted = false;
             item.node.dirty = true;
@@ -223,10 +347,13 @@
         }).on('treelistselect', function(event, item) {
           if ( item.diffcontent ) {
             $('#node-input-flowhubdiff-diffcontainer').html(item.diffcontent)
+          } else {
+            $('#node-input-flowhubdiff-diffcontainer').html("")
           }
+
           if ( item.node ) {
             RED.workspaces.show(item.node.z,false,false,true);
-            $('#node-dialog-cancel').trigger('click')
+            // $('#node-dialog-cancel').trigger('click')
 
             var itm = item;
             setTimeout( () => {
@@ -269,6 +396,39 @@
   })();
 </script>
 
+<style>
+.diff-viewer{
+  overflow:scroll;
+  background-color:rgb(244, 244, 244);
+  border: 2px solid #000;
+  height:80vh;
+  padding: 20px;
+  max-width: 90vw;
+}
+
+.dv-differ {
+  background-color: rgba(244, 170, 23, 0.476) !important;
+}
+
+.dv-removed {
+  background-color: rgb(203, 203, 38) !important;
+}
+
+.dv-added {
+  background-color: rgb(86, 222, 120) !important;
+}
+
+.dv-pre-elem {
+    page-break-inside: avoid;
+    font-family: monospace;
+    max-width: 100%;
+    overflow: auto;
+    display: block;
+    word-wrap: break-word;
+    margin: 0px !important;
+}
+</style>
+
 <script type="text/html" data-template-name="FlowHubDiff">
   <div class="form-row">
     <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name">Name</span></label>
@@ -301,8 +461,12 @@
   </div>
 
   <div class="form-row" style="position: relative; min-height: 100px">
-    <div id="node-input-flowhubdiff-diffcontainer"></div>
+    <div id="node-input-flowhubdiff-svgcontainer"></div>
   </div>
+  
+    <div class="form-row" style="position: relative; min-height: 100px">
+      <div id="node-input-flowhubdiff-diffcontainer" class="diff-viewer"></div>
+    </div>
 </script>
 
 <script type="text/html" data-help-name="FlowHubDiff">
