@@ -183,6 +183,11 @@
           var items = [];
           var nodeItemMap = {};
 
+          if ( resp.status == "failed") {
+            $('#node-input-flowhubdiff-target-container-div').html("This does not seem to be a FlowHub flow id: " + activeWorkspace) 
+            return;
+          }
+
           resp.changes.forEach( function (nde) {
             var nId = nde.id;
 
@@ -465,7 +470,7 @@
 
   <div class="form-row">
       <button id="node-input-push-flow-but"
-              class="red-ui-button">Push Flow-Tab to FlowHub</button>
+              class="red-ui-button">Compare Local to Remote Flow</button>
   </div>
 
   <div class="form-row">
@@ -490,6 +495,6 @@
 </script>
 
 <script type="text/html" data-help-name="FlowHubDiff">
-<p>Compare the current version of a flow with the latest version at FlowHub.org</p>
-This node can be used to compare flows being modified locally with those stored on FlowHub. Difference are highlighted in the property panel.
+<p>Compare the local version of a flow with the latest version at FlowHub.org</p>
+This node can be used to compare flows that have been modified locally with those stored on FlowHub. Difference are highlighted in the property panel. Nodes marked with <i class="fa fa-eye"></i> are changes that are only visual, changes marked with a <i class="fa fa-pencil"></i> have textual changes.
 </script>

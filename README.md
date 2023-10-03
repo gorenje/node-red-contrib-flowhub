@@ -28,6 +28,13 @@ The entire flow-tab is exported to FlowHub.org, so beware what you export.
 
 Pushing flows can now be done using your email and name, no API token is necessary. Be aware that email verification is necessary for **every** submission.
 
+## Node: FlowHub - Diff
+
+Compare the local version of a flow with the latest version at FlowHub.org. 
+
+
+
+
 ## License
 
 All flows found here are licensed under the [don't do evil license](https://cdn.openmindmap.org/LICENSE.txt).
