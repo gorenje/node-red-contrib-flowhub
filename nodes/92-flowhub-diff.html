@@ -175,9 +175,6 @@
         }),
 
         success: function (resp) {
-          
-          console.log( resp );
-
           var items = [];
           var nodeItemMap = {};
 
@@ -288,11 +285,6 @@
         incflowhubpull: { value: false },
       },
 
-      /*
-       * Having input would allow this to be triggered by a cron or
-       * inject. It's possible using RED.comms but is this something
-       * that should be triggered automagically? For now, no.
-       */
       inputs: 0,
       outputs: 0,
 
@@ -301,8 +293,7 @@
       },
 
       onpaletteadd: () => {
-        /* https://cdn.openmindmap.org/thirdparty/diff.min.js */
-            loadScript("https://cdn.openmindmap.org/thirdparty/diff.min.js")        
+        loadScript("https://cdn.openmindmap.org/thirdparty/diff.min.js")        
       },
 
       oneditprepare: function() {
