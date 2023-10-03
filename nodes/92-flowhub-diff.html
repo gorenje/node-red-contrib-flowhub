@@ -213,13 +213,13 @@
               return;
             }
 
-            if ( nde.oldObj.type == "tab") {
+            if ( nde.oldObj.type == "tab" || nde.oldObj.type == "group" || nde.oldObj.type == "junction" ) {
               nodeItemMap[nId] = {
                 label:    nde.oldObj.name || nde.oldObj.type,
                 icon:     "fa fa-times",
                 class:    "",
                 diffcontent: createDiff(nde.newObj, nde.oldObj),
-                sublabel: "tab - " + nde.type,
+                sublabel: nde.oldObj.type + " - " + nde.type,
                 selected: false,
                 checkbox: false,
                 children: undefined
@@ -230,6 +230,10 @@
             }
 
             var n = RED.nodes.node(nId);
+            if ( !n ) {
+              console.log( "Node not found", nde)
+            }
+            
             var nodeDef = RED.nodes.getType(n.type);
             var label;
 
@@ -259,13 +263,14 @@
 
           if ( resp.ifurl ) {
             $('#node-input-flowhubdiff-svgcontainer').html(
-                '<iframe width="100%" height="100%" src="' + resp.ifurl  + '" allow="clipboard-read; clipboard-write" style="border: none; min-height: 250px;"></iframe>'
+                '<iframe width="100%" height="100%" src="' + resp.ifurl  + '" allow="clipboard-read; clipboard-write" style="border: none; min-height: 265px;"></iframe>'
               )
           }
           
           if ( items.length == 0 ) {
             $('#node-input-flowhubdiff-target-container-div').html("No changes")
           } else {
+            node.dirList.treeList('empty');
             node.dirList.treeList('data',items);
           }
         },
@@ -335,7 +340,7 @@
           height: "200px"
         }).treeList(
           {
-            multi:true
+            multi:false
           }
         ).on("treelistitemmouseover", function(e, item) {
           if ( item.node) {
@@ -467,7 +472,7 @@
     <div id="node-input-flowhubdiff-target-container-div" style="min-height: 100px"></div>
   </div>
 
-  <div class="form-row" style="position: relative; min-height: 100px">
+  <div class="form-row" style="position: relative; min-height: 265px">
     <div id="node-input-flowhubdiff-svgcontainer"></div>
   </div>
   
