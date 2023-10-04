@@ -119,9 +119,58 @@
         }
       });
       
+      /* 
+       * strange happenings, the server says that these two nodes differ but 
+       * there are zero changed attributes ... hm  ... so do a diff over the
+       * entire nodes.
+       */
+      if ( changedAttrs.length == 0 ) {
+          let span = null;
+          let nme = "OBJ"
+          // let diff = Diff.diffChars(JSON.stringify(ndeV2,undefined,1), JSON.stringify(ndeV1,undefined,1))
+          let diff = Diff.diffJson(ndeV2, ndeV1)
+
+          const fragment = document.createDocumentFragment();
+
+          diff.forEach((part) => {
+            // green for additions, red for deletions
+            const color = part.added ? 'green' : part.removed ? 'red' : '#040506';
+
+            span = document.createElement('pre');
+            span.setAttribute('class','dv-pre-elem');
+            span.style.color = color;
+            span.appendChild(document.createTextNode(part.value));
+            span.appendChild(document.createElement('br'));
+            fragment.appendChild(span);
+          });
+
+          var row = document.createElement('tr');
+          row.setAttribute('class',"dv-differ")
+          var cell = document.createElement('th')
+          cell.appendChild(document.createTextNode(nme))
+          if (descMap[nme]) {
+            var itl = document.createElement('i');
+            itl.style["font-size"] = "80%"
+            itl.appendChild(document.createTextNode("(" + descMap[nme]+")"))
+            cell.appendChild(itl)
+          }
+          row.append(cell);
+
+          cell = document.createElement('td')
+          cell.setAttribute('colspan', '2')
+          cell.append( fragment)
+
+          row.append(cell)
+
+          return {
+            html: row.outerHTML,
+            icon: "fa-question"
+          }
+      }
+
       return { 
         html: diffDetails.join(""),
-        visualOnly: changedAttrs.filter( d => d != 'x' && d != 'w' && d != 'y' && d != 'h').length == 0
+        icon: changedAttrs.filter( d => d != 'x' && d != 'w' && d != 'y' && d != 'h').length == 0 ? "fa-eye" : "fa-pencil"
       }
     }
 
@@ -209,6 +258,7 @@
 
             if ( nde.type == "added") {
               nodeItemMap[nId] = {
+                objid:    nId,
                 label:    nde.newObj.name || nde.newObj.type,
                 icon:     "fa fa-check",
                 class:    "",
@@ -224,11 +274,14 @@
             }
 
             if ( nde.oldObj.type == "tab" || nde.oldObj.type == "group" || nde.oldObj.type == "junction" ) {
+              var diffContent = createDiff(nde.newObj, nde.oldObj);
+
               nodeItemMap[nId] = {
+                objid:    nId,
                 label:    nde.oldObj.name || nde.oldObj.type,
-                icon:     "fa fa-times",
+                icon:     "fa " + diffContent.icon,
                 class:    "",
-                diffcontent: createDiff(nde.newObj, nde.oldObj).html,
+                diffcontent: diffContent.html,
                 sublabel: nde.type + " - " + nde.oldObj.type,
                 selected: false,
                 checkbox: false,
@@ -239,6 +292,9 @@
               return;
             }
 
+            /* 
+             * Pass this point only nodes, no groups, tabs or junctions
+             */
             var n = RED.nodes.node(nId);
             if ( !n ) {
               console.log( "Node not found", nde)
@@ -257,10 +313,12 @@
             }
 
             var diffContent = createDiff(nde.newObj, nde.oldObj);
+
             nodeItemMap[n.id] = {
               node:     n,
+              objid:    nId,
               label:    label,
-              icon:     "fa " + (diffContent.visualOnly ? 'fa-eye' : 'fa-pencil'),
+              icon:     "fa " + diffContent.icon,
               class:    "",
               diffcontent: diffContent.html,
               sublabel: nde.type,
@@ -282,8 +340,6 @@
             $('#node-input-flowhubdiff-target-container-div').html("No changes")
           } else {
             node.dirList.treeList('empty');
-
-
             node.dirList.treeList('data',items.sort( (a,b) => a.sublabel > b.sublabel ));
           }
         },
@@ -356,37 +412,16 @@
             multi:false
           }
         ).on("treelistitemmouseover", function(e, item) {
-          if ( item.node) {
-            RED.workspaces.show(item.node.z,false,false,true);
-            item.node.highlighted = true;
-            RED.view.reveal(item.node.id,true)
-            RED.view.redraw();
+          if ( item.objid) {
+            RED.view.reveal(item.objid,true)
+            RED.view.redraw()
           }
         }).on("treelistitemmouseout", function(e, item) {
-
-          if ( item.node ) {
-            item.node.highlighted = false;
-            item.node.dirty = true;
-            RED.view.redraw();
-          }
         }).on('treelistselect', function(event, item) {
           if ( item.diffcontent ) {
             $('#node-input-flowhubdiff-diffcontainer').html(item.diffcontent)
           } else {
             $('#node-input-flowhubdiff-diffcontainer').html("")
-          }
-
-          if ( item.node ) {
-            RED.workspaces.show(item.node.z,false,false,true);
-            // $('#node-dialog-cancel').trigger('click')
-
-            var itm = item;
-            setTimeout( () => {
-              RED.sidebar.info.show();
-              RED.view.redraw();
-              RED.view.select(itm.node.id);
-              RED.actions.invoke("core:move-selection-to-front");
-            }, 735 );
           }
         });
 
@@ -425,10 +460,11 @@
 .diff-viewer{
   overflow:scroll;
   background-color:rgb(244, 244, 244);
-  border: 1px solid rgb(85,85,85);
+  border: 1px solid rgb(196,196,196);
   height:80vh;
   padding: 20px;
   max-width: 90vw;
+  border-radius: 5px;
 }
 
 .dv-differ {
