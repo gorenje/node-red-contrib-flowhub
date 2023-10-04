@@ -246,7 +246,7 @@
                 icon:     "fa fa-times",
                 class:    "",
                 diffcontent: createDiff({}, nde.oldObj).html,
-                sublabel: nde.type,
+                sublabel: nde.oldObj.type,
                 selected: false,
                 checkbox: false,
                 children: undefined
@@ -263,7 +263,7 @@
                 icon:     "fa fa-check",
                 class:    "",
                 diffcontent: createDiff(nde.newObj, {}).html,
-                sublabel: nde.type,
+                sublabel: nde.newObj.type,
                 selected: false,
                 checkbox: false,
                 children: undefined
@@ -321,7 +321,7 @@
               icon:     "fa " + diffContent.icon,
               class:    "",
               diffcontent: diffContent.html,
-              sublabel: nde.type,
+              sublabel: nde.oldObj.type,
               selected: false,
               checkbox: false,
               children: undefined

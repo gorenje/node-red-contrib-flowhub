@@ -36,7 +36,6 @@ Property panel for the diff node:
 
 ![img](https://cdn.openmindmap.org/content/1696353584043_Screen_Shot_2023-10-03_at_18.53.11.png)
 
-
 ## License
 
 All flows found here are licensed under the [don't do evil license](https://cdn.openmindmap.org/LICENSE.txt).
