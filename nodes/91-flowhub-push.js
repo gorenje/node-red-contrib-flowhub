@@ -12,7 +12,7 @@ module.exports = function(RED) {
     node.on("input", function(msg, send, done) {
       // remove flowhub nodes from the submission
       var flowdata = msg.flowdata.filter(function(obj) {
-        return ( (obj.type != "FlowHubPull" || (obj.type == "FlowHubPull" && msg.incflowhubpull)) && obj.type != "FlowHubPush" )
+        return ( (obj.type != "FlowHubPull" || (obj.type == "FlowHubPull" && msg.incflowhubpull)) && obj.type != "FlowHubPush" && obj.type != "FlowHubDiff")
       });
 
       RED.util.evaluateNodeProperty(cfg.apiToken, cfg.apiTokenType,
