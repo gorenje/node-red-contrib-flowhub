@@ -34,7 +34,7 @@ Compare the local version of a flow with the latest version at FlowHub.org.
 
 Property panel for the diff node:
 
-![img](https://cdn.openmindmap.org/content/1696353584043_Screen_Shot_2023-10-03_at_18.53.11.png)
+![img](https://cdn.openmindmap.org/content/1696512960899_Screen_Shot_2023-10-05_at_15.19.11.png)
 
 ## License
 
