@@ -9,7 +9,7 @@
     "node-red", "flowhub", "flowsharing"
   ],
 
-  "homepage": "https://flowhub.org",
+  "homepage": "https://github.com/gorenje/node-red-contrib-flowhub#README.md",
   "license": "Don't be Evil.",
   "author": "Gerrit Riessen <nodered@spreads-the.love> (https://spread-the.love)",
   "engines": {
