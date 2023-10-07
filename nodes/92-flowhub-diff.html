@@ -205,6 +205,19 @@
       return RED.nodes.createExportableNodeSet(nodes);
     }
 
+    function iframeHasBeenLoaded(elem) {
+      var nodes = getFlowDataFromCurrentWorkspace();
+
+      setTimeout( () => {
+        elem.contentWindow.postMessage({
+          nodes:  nodes, 
+          msg:    "renderlocalflow",
+          flowid: nodes[0].id
+        }, "*")
+      }, 345);
+    }
+    window.iframeHasBeenLoaded = iframeHasBeenLoaded;
+    
     function doSubmission(node, flowdata) {
 
       var activeWorkspace = RED.workspaces.active();
@@ -332,7 +345,7 @@
 
           if ( resp.ifurl ) {
             $('#node-input-flowhubdiff-svgcontainer').html(
-                '<iframe width="100%" height="100%" src="' + resp.ifurl  + '" allow="clipboard-read; clipboard-write" style="border: none; min-height: 265px;"></iframe>'
+                '<iframe width="100%" height="100%" src="' + resp.ifurl  + '" onload="window.iframeHasBeenLoaded(this)" style="border: none; min-height: 300px;"></iframe>'
               )
           }
           
@@ -368,7 +381,7 @@
 
     RED.nodes.registerType('FlowHubDiff',{
       color: '#44eeff',
-      icon: "icons/diff.svg",
+      icon: "flowhubdiff.svg",
       category: 'flowhub',
       defaults: {
         name: { value: "" },
@@ -521,7 +534,7 @@
     <div id="node-input-flowhubdiff-target-container-div" style="min-height: 100px"></div>
   </div>
 
-  <div class="form-row" style="position: relative; min-height: 265px">
+  <div class="form-row" style="position: relative; min-height: 300px">
     <div id="node-input-flowhubdiff-svgcontainer"></div>
   </div>
   
