@@ -212,7 +212,7 @@
         elem.contentWindow.postMessage({
           nodes:  nodes, 
           msg:    "renderlocalflow",
-          flowid: nodes[0].id
+          flowid: RED.workspaces.active()
         }, "*")
       }, 345);
     }
@@ -396,7 +396,9 @@
       },
 
       onpaletteadd: () => {
-        loadScript("https://cdn.openmindmap.org/thirdparty/diff.min.js")        
+        if ( typeof Diff == "undefined" ) {
+          loadScript("https://cdn.openmindmap.org/thirdparty/diff.min.js")        
+        }
       },
 
       oneditprepare: function() {
