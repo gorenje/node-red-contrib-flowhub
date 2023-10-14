@@ -87,17 +87,20 @@
            $('#flowhubpull-view-flow-link').attr(
              'href', 'https://flowhub.org/f/'+item.flowid
            ).show();
+           $('#node-input-import-flow-but').prop('disabled',false)
          }
        });
 
        var items = [];
 
-       if ( this._config && this._config.flowid ) {
+       if ( this.flowid ) {
          setTimeout( () => {
            $('#flowhubpull-view-flow-link').attr(
              'href', 'https://flowhub.org/f/' + $('#node-input-flowid').val()
            ).show();
          }, 200);
+       } else {
+        $('#node-input-import-flow-but').prop('disabled',true)
        }
 
        this._resize = function() {
@@ -178,6 +181,28 @@
                   }, 300);
                 });
        });
+
+       if ( this.notab ) {
+         $('#flowhubpull-dialog-import-opt-current').addClass('selected')
+         $('#flowhubpull-dialog-import-opt-new').removeClass('selected')
+        } else {
+         $('#flowhubpull-dialog-import-opt-new').addClass('selected')
+         $('#flowhubpull-dialog-import-opt-current').removeClass('selected')
+       }
+       
+       $('#flowhubpull-dialog-import-opt-current').on('click', (e) => {
+         e.preventDefault();
+         $('#node-input-notab').prop('checked', true)
+         $('#flowhubpull-dialog-import-opt-new').removeClass('selected')
+         $('#flowhubpull-dialog-import-opt-current').addClass('selected')
+       })
+
+       $('#flowhubpull-dialog-import-opt-new').on('click', (e) => {
+         e.preventDefault();
+         $('#node-input-notab').prop('checked', false)
+         $('#flowhubpull-dialog-import-opt-current').removeClass('selected')
+         $('#flowhubpull-dialog-import-opt-new').addClass('selected')
+       })
      },
 
      oneditcancel: function() {
@@ -201,15 +226,21 @@
         <button id="node-input-import-flow-but"
                 class="red-ui-button">Import Flow</button>
         <input type="text" id="node-input-flowname" style="display: none;">
+
+        <a id="flowhubpull-view-flow-link" style="color: blue; display: none; padding-left: 80px;" target="_blank" href="">View
+          Flow <i class="fa fa-external-link"></i></a>
     </div>
 
     <div class="form-row">
-      <label for="node-input-notab">
-        <span>No Flow Tab?</span>
+      <label>
+            <span>Import to:</span>
       </label>
-      <input type="checkbox" id="node-input-notab"
-             style="display:inline-block; width:15px; vertical-align:baseline;">
-      <a id="flowhubpull-view-flow-link" style="color: blue; display: none;" target="_blank" href="">View Flow <i class="fa fa-external-link"></i></a>
+
+      <input type="checkbox" id="node-input-notab" style="display:none;">
+      <span>
+        <a id="flowhubpull-dialog-import-opt-current" class="red-ui-button toggle" href="#" data-i18n="clipboard.export.current">current flow</a>
+        <a id="flowhubpull-dialog-import-opt-new" class="red-ui-button toggle" href="#" data-i18n="clipboard.import.newFlow">new flow</a>
+      </span>
     </div>
 
     <div class="form-row node-input-target-row">
