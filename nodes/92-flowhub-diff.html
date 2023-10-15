@@ -168,9 +168,10 @@
           }
       }
 
+      var visualOnlyAttributes = ['x','y','w','h','g','wires'];
       return { 
         html: diffDetails.join(""),
-        icon: changedAttrs.filter( d => d != 'x' && d != 'w' && d != 'y' && d != 'h').length == 0 ? "fa-eye" : "fa-pencil"
+        icon: changedAttrs.filter( d => { return visualOnlyAttributes.indexOf(d) < 0 }).length == 0 ? "fa-eye" : "fa-pencil"
       }
     }
 
