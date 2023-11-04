@@ -1,31 +1,32 @@
 {
-  "name" : "@gregoriusrippenstein/node-red-contrib-flowhub",
+  "name": "@gregoriusrippenstein/node-red-contrib-flowhub",
   "version": "0.2.9",
   "dependencies": {
     "got": "latest"
   },
-
   "keywords": [
-    "node-red", "flowhub", "flowsharing"
+    "node-red",
+    "flowhub",
+    "flowsharing"
   ],
-
   "homepage": "https://github.com/gorenje/node-red-contrib-flowhub#README.md",
   "license": "Don't be Evil.",
   "author": "Gerrit Riessen <nodered@spreads-the.love> (https://spread-the.love)",
   "engines": {
     "node": ">=8"
   },
-
-  "node-red" : {
+  "node-red": {
     "version": ">=2.0.0",
+    "plugins": {
+      "sidebar-plugin": "plugins/flowhubdiff.html"
+    },
     "nodes": {
-      "flowhubpull":   "nodes/90-flowhub-pull.js",
-      "flowhubpush":   "nodes/91-flowhub-push.js",
-      "flowhubdiff":   "nodes/92-flowhub-diff.js"
+      "flowhubpull": "nodes/90-flowhub-pull.js",
+      "flowhubpush": "nodes/91-flowhub-push.js",
+      "flowhubdiffcfg": "nodes/flowhubdiffcfg.js"
     }
   },
-
-  "description": "FlowHub interaction nodes.",
+  "description": "Nodes for interacting with FlowHub.org.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gorenje/node-red-contrib-flowhub.git"
