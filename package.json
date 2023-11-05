@@ -18,11 +18,12 @@
   "node-red": {
     "version": ">=2.0.0",
     "plugins": {
-      "sidebar-plugin": "plugins/flowhubdiff.html"
+      "diff": "plugins/flowhubdiff.html",
+      "push": "plugins/flowhubpush.html"
     },
     "nodes": {
       "flowhubpull": "nodes/90-flowhub-pull.js",
-      "flowhubpush": "nodes/91-flowhub-push.js",
+      "flowhubpushcfg": "nodes/flowhubpushcfg.js",
       "flowhubdiffcfg": "nodes/flowhubdiffcfg.js"
     }
   },

@@ -1,0 +1,316 @@
+<script type="text/javascript">
+(function() {
+   var globalYourConfigNode = null;
+
+   function getFlowDataFromCurrentWorkspace() {
+      /******
+       ** Code taken from Node-RED code base:
+       **
+       ** https://github.com/node-red/node-red/blob/e8ddee24a9944e57d186f02b081295c56a45b67c/packages/node_modules/%40node-red/editor-client/src/js/ui/clipboard.js#L710-L723
+       **
+       **/
+      var activeWorkspace = RED.workspaces.active();
+      var nodes = RED.nodes.groups(activeWorkspace);
+
+      nodes = nodes.concat(RED.nodes.junctions(activeWorkspace));
+      nodes = nodes.concat(RED.nodes.filterNodes({z:activeWorkspace}));
+
+      RED.nodes.eachConfig(function(n) {
+        if (n.z === RED.workspaces.active() && n._def.hasUsers === false) {
+          // Grab any config nodes scoped to this flow that don't
+          // require any flow-nodes to use them
+          nodes.push(n);
+        }
+      });
+
+      var parentNode = RED.nodes.workspace(
+        activeWorkspace
+      ) || RED.nodes.subflow(activeWorkspace);
+
+      nodes.unshift(parentNode);
+
+      return RED.nodes.createExportableNodeSet(nodes);
+    }
+
+   function doSubmission(flowdata) {
+      ensureYourConfigNodeExists();
+
+      var activeWorkspace = RED.workspaces.active();
+
+      $.ajax({
+         url:         "FlowHubPush",
+         type:        "POST",
+         contentType: "application/json; charset=utf-8",
+
+         data: JSON.stringify({
+            flowid:         activeWorkspace,
+            flowdata:       flowdata || {},
+            flowlabel:      RED.nodes.workspace(activeWorkspace).label,
+            cfgnode:        globalYourConfigNode,
+            incflowhubpull: $("#node-input-flowhubpush-incflowhubpull").is(":checked")
+         }),
+
+         success: function (resp) {
+            RED.notify("Submission triggered", {
+               type: "warning",
+               id: "FlowHubPush",
+               timeout: 2000
+            });
+
+            $('#flowhubpush-view-flow-link').attr('href', "https://flowhub.org/f/" + activeWorkspace).show();
+         },
+
+         error: function (jqXHR, textStatus, errorThrown) {
+            RED.notify("Submission failed: " + textStatus, {
+               type: "error",
+               id: "FlowHubPush",
+               timeout: 2000
+            });
+            console.log(textStatus,errorThrown )
+         }
+      });      
+   }
+
+   function ensureYourConfigNodeExists() {
+      // This function makes sure there is 1 instance of your config node is available, and that the globalYourConfigNode variable refers to it.
+      // Explained in the next step of this tutorial... --> https://discourse.nodered.org/t/tutorial-create-a-sidebar-plugin-and-persist-the-data-in-a-config-node/82020
+
+      // If we had found it previously, check if it has been deleted by the user behind our back
+      if (globalYourConfigNode !== null) {
+         var configNode = RED.nodes.node(globalYourConfigNode.id);
+         if (configNode === null) { globalYourConfigNode = null; }
+      }
+
+      // If not found previously, let's go find it
+      if (globalYourConfigNode === null) {
+         var configNodes = [];
+         RED.nodes.eachConfig(function(configNode) {
+             if (configNode.type === 'FlowHubPushCfg') { 
+                 configNodes.push(configNode); 
+             }
+         });
+
+         // Make sure we only have 1 config node
+         while (configNodes.length > 1) {
+             var configNode = configNodes.pop();
+             RED.nodes.remove(configNode.id);
+             RED.nodes.dirty(true);
+         }
+
+         // When we found a config node, let's use that one
+         if (configNodes.length === 1) { globalYourConfigNode = configNodes[0]; }
+      }
+
+      // When it doesn't exist yet, create it if required
+      if (globalYourConfigNode === null) {
+         // Remark: since this config node is dynamically created (and only used in this sidebar which isn't another node), the config
+         // node is in fact "unused".  But since we don't want it to appear "unused" in the "config nodes" panel, we need to set hasUsers
+         // to false (see https://github.com/node-red/node-red/blob/master/CHANGELOG.md#0161-maintenance-release).
+         // The hasUsers needs also to be specified in the RED.nodes.registerType statement!
+         let typ = RED.nodes.getType("FlowHubPushCfg");
+         
+         globalYourConfigNode = {
+             id: RED.nodes.id(), // on the server side, this is called RED.util.generateId()
+             _def: typ,
+             type: "FlowHubPushCfg",
+             hasUsers: false, 
+             users: [],
+             name: "FlowHubPushCfg",
+             label: function() { return this.name || "FlowHubPushCfg"},
+             /* default data */
+             apiToken: typ.defaults.apiToken.value,
+             apiTokenType: typ.defaults.apiTokenType.value,
+             email: "",
+             fullname: "",
+             incflowhubpull: typ.defaults.incflowhubpull.value
+         }
+
+         // Add the new config node to the collection of Node-RED nodes
+         RED.nodes.add(globalYourConfigNode);
+
+         // Make sure the "Deploy" button becomes active
+         RED.nodes.dirty(true);
+      }      
+   }
+
+   // Add your plugin as a new tabsheet in the right sidebar AFTER the flow editor is completely started
+   var initialiseFlowHubPushConfigNodeOnce = () => {
+      RED.events.off('runtime-state', initialiseFlowHubPushConfigNodeOnce);
+
+      // The html content of the sidebar has been specified below as a data-template, from where it can be loaded:
+      var content = $($('script[type="text/x-red"][data-template-name="FlowHubPush"]').i18n().html());
+    
+      // Add a "Your sidebar" tabsheet to the right sidebar panel, in which this sidebar panel can be displayed
+      // --> more details: https://nodered.org/docs/api/ui/sidebar/
+      RED.sidebar.addTab({
+         id: "FlowHubPush",
+         label: "FlowHub Push", // short name for the tab
+         name: "FlowHub Push", // long name for the menu
+         content: content,
+         action:"flowhub:flowhub-push-flow",
+         enableOnEdit: true,
+         iconClass: "fa fa-share-square-o" // your fontawesome icon
+      });
+
+      RED.actions.remove("flowhub:flowhub-push-flow")
+      RED.actions.add("flowhub:flowhub-push-flow",() => {
+         doSubmission( getFlowDataFromCurrentWorkspace() )
+      });
+
+      ensureYourConfigNodeExists();
+
+      $("#node-input-flowhubpush-apiToken").typedInput({
+          types:["env", "global", "cred"],
+          typeField: "#node-input-flowhubpush-apiTokenType"
+      });
+
+      $("#node-input-flowhubpush-apiToken").typedInput( 'value', globalYourConfigNode.apiToken || globalYourConfigNode._def.defaults.apiToken.value );
+      $("#node-input-flowhubpush-apiToken").typedInput( 'type', globalYourConfigNode.apiTokenType || globalYourConfigNode._def.defaults.apiTokenType.value);
+
+      $("#node-input-flowhubpush-apiToken").on('change', () => {
+         ensureYourConfigNodeExists();
+         
+         var val = $("#node-input-flowhubpush-apiToken").typedInput('value');
+         var typ = $("#node-input-flowhubpush-apiToken").typedInput('type');
+
+         if ( val != globalYourConfigNode.apiToken ) {
+            globalYourConfigNode.apiToken = val;
+            RED.nodes.dirty(true);
+         }
+
+         if ( typ != globalYourConfigNode.apiTokenType ) {
+            globalYourConfigNode.apiTokenType = typ;
+            RED.nodes.dirty(true);
+         }
+      })
+
+      $('#node-input-flowhubpush-email').on('change', (e) => {
+         if ( e ) { e.preventDefault(); }
+         ensureYourConfigNodeExists();
+
+         let val = $('#node-input-flowhubpush-email').val();
+         if ( val != globalYourConfigNode.email ) { 
+            globalYourConfigNode.email = val;
+            RED.nodes.dirty(true);
+         }
+      })
+
+      $('#node-input-flowhubpush-fullname').on('change', (e) => {
+         if ( e ) { e.preventDefault(); }
+         ensureYourConfigNodeExists();
+
+         let val = $('#node-input-flowhubpush-fullname').val();
+         if ( val != globalYourConfigNode.fullname ) { 
+            globalYourConfigNode.fullname = val;
+            RED.nodes.dirty(true);
+         }
+      })
+
+      $('#node-input-flowhubpush-incflowhubpull').on('change', () => {
+         ensureYourConfigNodeExists();
+
+         var val = $('#node-input-flowhubpush-incflowhubpull').is(":checked");
+
+         if ( val != globalYourConfigNode.incflowhubpull) {
+            globalYourConfigNode.incflowhubpull = val;
+            RED.nodes.dirty(true);
+         }
+      })
+      $('#node-input-flowhubpush-incflowhubpull').prop("checked", globalYourConfigNode.incflowhubpull)
+
+      RED.comms.subscribe('flowhub:submission-result', (event,data) => {
+         RED.notify("Submission status: " + data.status, {
+            type: data.statusType,
+            id: "FlowHubPushResult",
+            timeout: 2000
+         });
+      });
+
+      $('#node-input-flowhubpush-push-btn').on('click', (e) => {
+         if ( e ) { e.preventDefault(); }
+         doSubmission( getFlowDataFromCurrentWorkspace() )
+      });
+   };
+   RED.events.on('runtime-state', initialiseFlowHubPushConfigNodeOnce);
+})();
+</script>
+
+<!-- The html for the right sidebar plugin screen -->
+<script type="text/x-red" data-template-name="FlowHubPush">
+
+<div class="form-row" style="margin-top: 30px; margin-left: 10px;">
+   <label for="node-input-flowhubpush-apiToken">
+      <i class="fa fa-tag"></i>
+      FlowHub API Token
+    </label>
+   <input type="text" id="node-input-flowhubpush-apiToken">
+   <input type="hidden" id="node-input-flowhubpush-apiTokenType">
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   Api Token can be obtained <a style="color: blue;"
+      href="mailto:api.token@flowhub.org?subject=API%20Token%20Request">upon request
+      <i class="fa fa-external-link"></i></a>.
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   Alternatively provide your email and full name to submit the current flow.<br>
+      All submissions will be reviewed at GitHub and either merged or dropped.<br>
+      Your <b>email and name</b> will be attached to the commit added to <br>
+      the <a style="color: blue;" target="_blank" href="https://github.com/gorenje/flows.flowhub.org">FlowHub repository
+      <i class="fa fa-external-link"></i></a>
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   <label for="node-input-flowhubpush-email">
+      <i class="fa fa-tag"></i>
+      Email
+    </label>
+   <input type="text" id="node-input-flowhubpush-email"
+           placeholder="john.smith@example.com">
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   <label for="node-input-flowhubpush-fullname">
+      <i class="fa fa-tag"></i>
+      Name
+    </label>
+   <input type="text" id="node-input-flowhubpush-fullname"
+           placeholder="Firstname Surname">
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   All submissions must be verified by email. After submission you<br>
+      will recieve an email to <b>confirm your submission</b>.
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   <b>License:</b><br><br>
+      All flows submitted are licensed under a copyleft <a style="color: blue;" target="_blank"
+      href="https://raw.githubusercontent.com/gorenje/flows.flowhub.org/main/LICENSE">license
+      <i class="fa fa-external-link"></i></a>,<br>
+      that grants complete do-anything-but-not-evil permission to the user<br>
+      and provides no warranty in case of failure nor guarantee of success.
+</div>
+
+<div class="form-row">
+   <hr />
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   <label for="node-input-flowhubpush-incflowhubpull" style="min-width: 200px;">
+      <span>Include FlowHubPull nodes?</span>
+    </label>
+   <input type="checkbox" id="node-input-flowhubpush-incflowhubpull" style="display:inline-block; width:15px; vertical-align:baseline;">
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   <button id="node-input-flowhubpush-push-btn"
+      class="red-ui-button">Push Flow-Tab to FlowHub</button>
+</div>
+
+<div class="form-row" style="margin-left: 10px;">
+   <a id="flowhubpush-view-flow-link" style="color: blue; display: none;" target="_blank" href="">View Flow
+      <i class="fa fa-external-link"></i></a>
+</div>
+</script>
