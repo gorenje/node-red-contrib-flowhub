@@ -2,8 +2,6 @@
 
 **Work In Progress**
 
-**Update**: Experimental submission is now possible using email & full-name. Pleae be aware that this service is *experimental* so don't expect too much.
-
 These are the Node-RED nodes that interact with [FlowHub.org](https://flowhub.org).
 
 [FlowHub.org](https://FlowHub.org) is an experimental first attempt to provide a gist/pastebin-like service for Node-RED.
@@ -16,9 +14,9 @@ Flows can be imported into the Node-RED editor using the pull node. Flows can be
 
 ## Node: FlowHub - Pull
 
-Node for importing flows from FlowHub.org. Flows may be imported into an existing tab or a new tab.
+Node for importing flows from FlowHub.org. Flows may be imported into an existing tab or a new tab. This can also be included in flows so that there is an chaining of flows. That is, if a flow relys on anther flow, then an pull node can be included to import that second flow.
 
-## Node: FlowHub - Push
+## Sidebar: FlowHub - Push
 
 Node for pushing in-editor flows to FlowHub.org. Flows do not need to be deployed to be exported.
 
@@ -28,7 +26,7 @@ The entire flow-tab is exported to FlowHub.org, so beware what you export.
 
 Pushing flows can now be done using your email and name, no API token is necessary. Be aware that email verification is necessary for **every** submission.
 
-## Node: FlowHub - Diff
+## Sidebar: FlowHub - Diff
 
 Compare the local version of a flow with the latest version at FlowHub.org. 
 
