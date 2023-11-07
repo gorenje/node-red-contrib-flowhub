@@ -84,10 +84,24 @@
          if ( item.flowid ) {
            $('#node-input-flowid').val(item.flowid);
            $('#node-input-flowname').val(item.label);
+
            $('#flowhubpull-view-flow-link').attr(
              'href', 'https://flowhub.org/f/'+item.flowid
            ).show();
+           
            $('#node-input-import-flow-but').prop('disabled',false)
+         }
+       }).on('treelistconfirm', function(event, item) {
+         if ( item.flowid ) {
+           $('#node-input-flowid').val(item.flowid);
+           $('#node-input-flowname').val(item.label);
+
+           $('#flowhubpull-view-flow-link').attr(
+             'href', 'https://flowhub.org/f/'+item.flowid
+           ).show();
+
+           $('#node-input-import-flow-but').prop('disabled',false)
+           $("#node-input-import-flow-but").trigger('click');
          }
        });
 
@@ -125,7 +139,7 @@
              var count = dirList.treeList("filter", function(item) {
                return item.label.toLowerCase().indexOf(val) > -1 || item.sublabel.toLowerCase().indexOf(val) > -1
              });
-             search.searchBox("count",count+" / "+items.length);
+             search.searchBox("count",count + " / " + dirList.treeList("data").length);
            }
          }
        });
@@ -147,7 +161,7 @@
        });
 
        $("#node-input-import-flow-but").on("click", function(e) {
-         e.preventDefault();
+         if ( e ) { e.preventDefault(); }
 
          var notab = $('#node-input-notab').prop('checked');
 
@@ -227,8 +241,8 @@
                 class="red-ui-button">Import Flow</button>
         <input type="text" id="node-input-flowname" style="display: none;">
 
-        <a id="flowhubpull-view-flow-link" style="color: blue; display: none; padding-left: 80px;" target="_blank" href="">View
-          Flow <i class="fa fa-external-link"></i></a>
+        <a id="flowhubpull-view-flow-link" style="color: blue; display: none; padding-left: 80px;" 
+           target="_blank" href="">View Flow <i class="fa fa-external-link"></i></a>
     </div>
 
     <div class="form-row">
@@ -245,7 +259,7 @@
 
     <div class="form-row node-input-target-row">
         <button id="node-input-refresh-list-but"
-                class="red-ui-button">Refresh</button>
+                class="red-ui-button"><i class="fa fa-shower"></i> Refresh</button>
     </div>
 
     <div class="form-row node-input-target-row node-input-target-list-row"
