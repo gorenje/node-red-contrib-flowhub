@@ -47,7 +47,6 @@
             flowdata:       flowdata || {},
             flowlabel:      RED.nodes.workspace(activeWorkspace).label,
             cfgnode:        globalYourConfigNode,
-            incflowhubpull: $("#node-input-flowhubpush-incflowhubpull").is(":checked")
          }),
 
          success: function (resp) {
@@ -122,7 +121,6 @@
              apiTokenType: typ.defaults.apiTokenType.value,
              email: "",
              fullname: "",
-             incflowhubpull: typ.defaults.incflowhubpull.value
          }
 
          // Add the new config node to the collection of Node-RED nodes
@@ -206,18 +204,6 @@
          }
       })
 
-      $('#node-input-flowhubpush-incflowhubpull').on('change', () => {
-         ensureYourConfigNodeExists();
-
-         var val = $('#node-input-flowhubpush-incflowhubpull').is(":checked");
-
-         if ( val != globalYourConfigNode.incflowhubpull) {
-            globalYourConfigNode.incflowhubpull = val;
-            RED.nodes.dirty(true);
-         }
-      })
-      $('#node-input-flowhubpush-incflowhubpull').prop("checked", globalYourConfigNode.incflowhubpull)
-
       RED.comms.subscribe('flowhub:submission-result', (event,data) => {
          RED.notify("Submission status: " + data.status, {
             type: data.statusType,
@@ -295,13 +281,6 @@
 
 <div class="form-row">
    <hr />
-</div>
-
-<div class="form-row" style="margin-left: 10px;">
-   <label for="node-input-flowhubpush-incflowhubpull" style="min-width: 200px;">
-      <span>Include FlowHubPull nodes?</span>
-    </label>
-   <input type="checkbox" id="node-input-flowhubpush-incflowhubpull" style="display:inline-block; width:15px; vertical-align:baseline;">
 </div>
 
 <div class="form-row" style="margin-left: 10px;">

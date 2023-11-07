@@ -12,10 +12,6 @@ module.exports = function (RED) {
           if (req.body && req.body.flowdata && req.body.flowid) {
             var msg = req.body;
 
-            var flowdata = msg.flowdata.filter(function (obj) {
-              return ((obj.type != "FlowHubPull" || (obj.type == "FlowHubPull" && msg.incflowhubpull)) && obj.type != "FlowHubPush" && obj.type != "FlowHubDiff")
-            });
-
             import('got').then((module) => {
               module.got.post("https://api.flowhub.org/v1/diff", {
                 headers: {
@@ -23,7 +19,7 @@ module.exports = function (RED) {
                 },
                 json: {
                   flowid: msg.flowid,
-                  flowdata: flowdata,
+                  flowdata: msg.flowdata,
                   flowlabel: msg.flowlabel,
                 },
                 timeout: {

@@ -114,10 +114,6 @@ module.exports = function (RED) {
             var cfgnode = req.body.cfgnode;
             var node = RED.nodes.getNode(cfgnode.id)
 
-            var flowdata = msg.flowdata.filter(function (obj) {
-              return ((obj.type != "FlowHubPull" || (obj.type == "FlowHubPull" && msg.incflowhubpull)) && obj.type != "FlowHubPush" && obj.type != "FlowHubDiff")
-            });
-
             RED.util.evaluateNodeProperty(cfgnode.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
               if (err || (result || "").trim() == "") {
                 if ((cfgnode.fullname || "").trim() == "" || (cfgnode.email || "").trim() == "") {
@@ -125,10 +121,10 @@ module.exports = function (RED) {
                   respond("Failed, no API TOKEN provided nor email and name.", "error", msg)
                   return;
                 } else {
-                  submitWithEmail(cfgnode.email, cfgnode.fullname, msg.flowid, flowdata, msg.flowlabel)
+                  submitWithEmail(cfgnode.email, cfgnode.fullname, msg.flowid, msg.flowdata, msg.flowlabel)
                 }
               } else {
-                submitWithToken(result, msg.flowid, flowdata, msg.flowlabel)
+                submitWithToken(result, msg.flowid, msg.flowdata, msg.flowlabel)
               }
 
               res.sendStatus(200);

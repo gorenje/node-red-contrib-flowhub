@@ -8,7 +8,6 @@
         apiTokenType: {   value: "env",   },
         fullname: { value: "" },
         email: { value: "" },
-        incflowhubpull: { value: false },
       },
       label: 'FlowHubPushCfg',
   });
@@ -19,23 +18,15 @@
 <script type="text/x-red" data-template-name="FlowHubPushCfg">
 
    <p>Push current flow tab to FlowHub.org.<br>
-      FlowHub nodes are ignored when flow-tabs are pushed to FlowHub.<br>
       Flow tabs are exported as they <b>are in the editor</b>. What you see<br>
       is what you export, the deployed flow might differ. This allows flows to<br>
       be modified <b>without</b> having to be deployed.
     </p>
     
-   <h3>Details</h3>
   <p>
       FlowHubPush is the twin to the FlowHubPull node and is responsible for<br>
       uploading the current flow tab to FlowHub. The Flow tab ID is used as<br>
-      identifier. The current flow tab in which the FlowHubPush node is<br>
-      located will be uploaded.<br>
-  </p>
-  <p>
-      FlowHubPush can be dragged into the flow, the button can be pressed to<br>
-      push the flow to FlowHub. Although for the button to be active, the<br>
-      flow has to be deployed at least once.<br>
+      identifier. The current active flow tab will be uploaded.<br>
   </p>
   <p>
       Documentation on the flow should be included in the info box of the<br>
