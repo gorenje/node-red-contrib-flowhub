@@ -1,7 +1,5 @@
 ## FlowHub: Gist for Node-RED
 
-**Work In Progress**
-
 These are the Node-RED nodes that interact with [FlowHub.org](https://flowhub.org).
 
 [FlowHub.org](https://FlowHub.org) is an experimental first attempt to provide a gist/pastebin-like service for Node-RED.
@@ -11,6 +9,17 @@ The aim is to make it easy to share flow-tabs amongst Node-RED developers.
 Flows can be exported directly from the Node-RED editor to FlowHub.org. Flows that have been edited but not deployed can be exported. Flows are taken from the editor not the Node-RED server.
 
 Flows can be imported into the Node-RED editor using the pull node. Flows can be imported into new tabs or directly into existing tabs.
+
+## Details
+
+Two articles are available that better describe my intentions in creating FlowHub.org:
+
+- [FlowHub: Visual Code Sharing](https://blog.openmindmap.org/blog/flowhub)
+- [FlowHub.org: Towards collaborative visual flow based development](https://blog.openmindmap.org/blog/flowhub-collaborative-code-sharing)
+
+In summary, the focus is on clarity of flow changes between revisions, on sharing of knowledge and collaboratively working on Node-RED flows.
+
+[Flow Based Programming](https://jpaulm.github.io/fbp/index.html) has many useful features unfortunately FBP lacks the tooling around that exists around textual programming languages: testing (unit testing), development workflows (GitHub flow) and collaboration (code comparison). These features need to be recreated in a *visual* form for FBP to reach a broad audience.
 
 ## Node: FlowHub - Pull
 
