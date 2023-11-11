@@ -43,6 +43,12 @@ Property panel for the diff node:
 
 ![img](https://cdn.openmindmap.org/content/1696512960899_Screen_Shot_2023-10-05_at_15.19.11.png)
 
+How the diff sidebar panel works:
+
+![img](https://cdn.openmindmap.org/content/1699712311277_flowhub-diff-2.gif)
+
+Double click opens the editor for the node.
+
 ## License
 
 All flows found here are licensed under the [don't do evil license](https://cdn.openmindmap.org/LICENSE.txt).
