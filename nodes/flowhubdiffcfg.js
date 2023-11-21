@@ -28,8 +28,7 @@ module.exports = function (RED) {
                 }
               }).then(resp => {
                 try {
-                  var rst = JSON.parse(resp.body)
-                  res.status(200).send(rst);
+                  res.status(200).send(JSON.parse(resp.body));
                 } catch (err) {
                   res.sendStatus(500);
                 }
