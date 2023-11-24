@@ -7,7 +7,9 @@
   "keywords": [
     "node-red",
     "flowhub",
-    "flowsharing"
+    "flow-sharing",
+    "collaborative",
+    "flow-development"
   ],
   "homepage": "https://github.com/gorenje/node-red-contrib-flowhub#README.md",
   "license": "Don't be Evil.",
@@ -18,13 +20,11 @@
   "node-red": {
     "version": ">=2.0.0",
     "plugins": {
-      "diff": "plugins/flowhubdiff.html",
-      "push": "plugins/flowhubpush.html"
+      "flowhub_sidebar": "plugins/flowhub.html"
     },
     "nodes": {
-      "flowhubpull": "nodes/90-flowhub-pull.js",
-      "flowhubpushcfg": "nodes/flowhubpushcfg.js",
-      "flowhubdiffcfg": "nodes/flowhubdiffcfg.js"
+      "flowhubpull": "nodes/flowhub-pull.js",
+      "flowhubcfg": "nodes/flowhubcfg.js"
     }
   },
   "description": "Nodes for interacting with FlowHub.org.",

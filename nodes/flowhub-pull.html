@@ -1,0 +1,302 @@
+<script type="text/javascript">
+ (function(){
+   function flowHubUpdateFlows(cb=null) {
+     $.get(
+       "https://api.flowhub.org/v1/flows?cb=" + new Date().getTime()
+     ).done( (resp) => {
+       var treeListItems = [];
+
+       Object.keys( resp.data ).forEach( function(key) {
+         treeListItems.push( {
+           label:    resp.data[key].name,
+           icon:     "fa fa-eye",
+           flowid:   key,
+           sublabel: key,
+           selected: $('#node-input-flowid').val() == key,
+           checkbox: false,
+           children: undefined
+         });
+       });
+
+       if ( cb ) {
+         treeListItems.sort( (a,b) => {
+           return a.label < b.label ? -1 : 1;
+         });
+
+         cb(treeListItems)
+       };
+     }).fail( (e) => {
+       var msg = "";
+
+       if ( e.state() == "rejected" ) {
+         msg = "<p>Failed to retrieve FlowHub catalogue, request blocked.</p>"+
+               "<p>AdBlocker or uBlock might have prevented request.</p>"+
+               "<p>Please check browser console for more details.</p>";
+       } else {
+         msg = "<p>Failed to retrieve FlowHub catalogue.</p>" +
+               "<p>Check browser console for more details.</p>";
+       }
+
+       console.warn("Error loading https://api.flowhub.org/v1/flows:",e);
+       RED.notify(msg, {
+           type: "error",
+           id: "FlowHubPull",
+           timeout: 4000
+         }
+       );
+     });
+   };
+
+   RED.nodes.registerType('FlowHubPull',{
+     color: '#44eeff',
+     icon: "flowhubpull.svg",
+     category: 'flowhub',
+     defaults: {
+       name: { value: ""},
+       notab: { value: false },
+       flowid: { value: "" },
+       flowname: { value: "" },
+       flowrevision: { value: "" }
+     },
+     inputs: 1,
+     outputs: 1,
+
+     label: function() {
+       return (this.name || this.flowname || this.flowid || this._def.paletteLabel);
+     },
+
+     onpaletteadd: () => {
+     },
+
+     oneditresize: function(size) {
+       if ( this._resize ) { this._resize(); };
+     },
+
+     oneditprepare: function() {
+       var dirList = $("#node-input-flowhubpull-target-container-div").css({
+        width: "100%",
+        height: "100%"
+       }).treeList(
+         {
+           multi:false
+         }
+       ).on('treelistselect', function(event, item) {
+         if ( item.flowid ) {
+           $('#node-input-flowid').val(item.flowid);
+           $('#node-input-flowname').val(item.label);
+
+           $('#flowhubpull-view-flow-link').attr(
+             'href', 'https://flowhub.org/f/'+item.flowid
+           ).show();
+           
+           $('#node-input-import-flow-but').prop('disabled',false)
+         }
+       }).on('treelistconfirm', function(event, item) {
+         if ( item.flowid ) {
+           $('#node-input-flowid').val(item.flowid);
+           $('#node-input-flowname').val(item.label);
+
+           $('#flowhubpull-view-flow-link').attr(
+             'href', 'https://flowhub.org/f/'+item.flowid
+           ).show();
+
+           $('#node-input-import-flow-but').prop('disabled',false)
+           $("#node-input-import-flow-but").trigger('click');
+         }
+       });
+
+       var items = [];
+
+       if ( this.flowid ) {
+         setTimeout( () => {
+           $('#flowhubpull-view-flow-link').attr(
+             'href', 'https://flowhub.org/f/' + $('#node-input-flowid').val()
+           ).show();
+         }, 200);
+       } else {
+        $('#node-input-import-flow-but').prop('disabled',true)
+       }
+
+       this._resize = function() {
+         var rows = $("#dialog-form>div:not(.node-input-target-list-row)");
+         var height = $("#dialog-form").height();
+         for (var i=0;i<rows.length;i++) {
+           height -= $(rows[i]).outerHeight(true);
+         }
+         var editorRow = $("#dialog-form>div.node-input-target-list-row");
+         editorRow.css("height",height+"px");
+       };
+
+       var search = $("#node-input-flowhubpull-target-filter").searchBox({
+         style: "compact",
+         delay: 300,
+         change: function() {
+           var val = $(this).val().trim().toLowerCase();
+           if (val === "") {
+             dirList.treeList("filter", null);
+             search.searchBox("count","");
+           } else {
+             var count = dirList.treeList("filter", function(item) {
+               return item.label.toLowerCase().indexOf(val) > -1 || item.sublabel.toLowerCase().indexOf(val) > -1
+             });
+             search.searchBox("count",count + " / " + dirList.treeList("data").length);
+           }
+         }
+       });
+
+       flowHubUpdateFlows((treeListItems) => {
+         items = treeListItems;
+         dirList.treeList('data', treeListItems);
+       });
+
+       $('#node-input-refresh-list-but').on('click', function(e) {
+         e.preventDefault();
+
+         setTimeout( () => {
+           flowHubUpdateFlows((treeListItems) => {
+             items = treeListItems;
+             dirList.treeList('data', treeListItems);
+           });
+         }, 300);
+       });
+
+       $("#node-input-import-flow-but").on("click", function(e) {
+         if ( e ) { e.preventDefault(); }
+
+         var notab = $('#node-input-notab').prop('checked');
+
+         if ( $('#node-input-flowid').val().trim() == "" ||
+              !$('#node-input-flowid').val() ) {
+           return RED.notify(RED._("notification.warning", {
+             message: "FlowID not provided, doing nothing."
+           }), "warning");
+         }
+
+         $('#node-dialog-ok').trigger('click')
+
+         $.get( "https://api.flowhub.org/v1/flows/" +
+                $('#node-input-flowid').val() +
+                "?cb=" + new Date().getTime() + "&v=" + 
+                $('#node-input-flowrevision').val(), function(e,d) {
+                  RED.clipboard.import();
+
+                  setTimeout( () => {
+                    var content = e;
+
+                    if ( notab ) {
+                      content = e.filter(function(o) {
+                        return o.type != "tab"
+                      });
+                    }
+
+                    $('#red-ui-clipboard-dialog-import-text').val(
+                      JSON.stringify(content)
+                    ).trigger("paste");
+                  }, 300);
+                });
+       });
+
+       if ( this.notab ) {
+         $('#flowhubpull-dialog-import-opt-current').addClass('selected')
+         $('#flowhubpull-dialog-import-opt-new').removeClass('selected')
+        } else {
+         $('#flowhubpull-dialog-import-opt-new').addClass('selected')
+         $('#flowhubpull-dialog-import-opt-current').removeClass('selected')
+       }
+       
+       $('#flowhubpull-dialog-import-opt-current').on('click', (e) => {
+         e.preventDefault();
+         $('#node-input-notab').prop('checked', true)
+         $('#flowhubpull-dialog-import-opt-new').removeClass('selected')
+         $('#flowhubpull-dialog-import-opt-current').addClass('selected')
+       })
+
+       $('#flowhubpull-dialog-import-opt-new').on('click', (e) => {
+         e.preventDefault();
+         $('#node-input-notab').prop('checked', false)
+         $('#flowhubpull-dialog-import-opt-current').removeClass('selected')
+         $('#flowhubpull-dialog-import-opt-new').addClass('selected')
+       })
+     },
+
+     oneditcancel: function() {
+     },
+
+     oneditsave: function() {
+     },
+
+     labelStyle: function() {
+       return this.name?"node_label_italic":"";
+     },
+   });
+ })();
+</script>
+
+<script type="text/html" data-template-name="FlowHubPull">
+    <div class="form-row">
+        <input type="text" id="node-input-flowid" disabled="disabled"
+               style="display:inline-block; width:40%; vertical-align:baseline;"
+               placeholder="FlowId to Import">
+        <button id="node-input-import-flow-but"
+                class="red-ui-button">Import Flow</button>
+        <input type="text" id="node-input-flowname" style="display: none;">
+
+        <a id="flowhubpull-view-flow-link" style="color: blue; display: none; margin-left: 80px;" 
+           target="_blank" href="">View Flow <i class="fa fa-external-link"></i></a>
+    </div>
+
+    <div class="form-row">
+      <label>
+            <span>Import to:</span>
+      </label>
+
+      <input type="checkbox" id="node-input-notab" style="display:none;">
+      <span>
+        <a id="flowhubpull-dialog-import-opt-current" class="red-ui-button toggle" href="#" data-i18n="clipboard.export.current">current flow</a>
+        <a id="flowhubpull-dialog-import-opt-new" class="red-ui-button toggle" href="#" data-i18n="clipboard.import.newFlow">new flow</a>
+      </span>
+    </div>
+
+    <div class="form-row node-input-target-row">
+        <button id="node-input-refresh-list-but"
+                class="red-ui-button"><i class="fa fa-shower"></i> Refresh</button>
+    </div>
+
+    <div class="form-row node-input-target-row node-input-target-list-row"
+         style="position: relative; min-height: 100px">
+        <div style="position: absolute; top: -30px; right: 0px;">
+            <input type="text" id="node-input-flowhubpull-target-filter">
+        </div>
+
+        <div id="node-input-flowhubpull-target-container-div"></div>
+    </div>
+
+    <div class="form-row">
+        All flows are licensed under a copyleft <a style="color: blue;" target="_blank" href="https://raw.githubusercontent.com/gorenje/flows.flowhub.org/main/LICENSE">license <i class="fa fa-external-link"></i></a>,<br>
+        hereby permission is given to use any flow for any purpose <br>
+        <b>other than</b> for evil. No guarantee of purpose fulfillment<br>
+        is made nor warrenty for failure - all risk is carried by the user.
+    </div>
+
+    <div class="form-row">
+      <label for="node-input-flowrevision"><i class="fa fa-tag"></i> Revision</label>
+      <input type="text" id="node-input-flowrevision" placeholder="Revision"/>
+    </div>
+    
+    <div class="form-row">
+      <hr/>
+    </div>
+
+    <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name">Name</span></label>
+      <input type="text" id="node-input-name" placeholder="Name"/>
+    </div>
+</script>
+
+<script type="text/html" data-help-name="FlowHubPull">
+    <p>
+        Import Flows from FlowHub.org. Opens the flow import dialog
+        with flow data. Flow can be imported into a new tab or the
+        existing tab.
+    </p>
+</script>
