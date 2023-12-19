@@ -15,7 +15,7 @@ module.exports = function (RED) {
     );
   }
 
-  function submitWithEmail(email, name, comment, flowid, flowdata, flowlabel) {
+  function submitWithEmail(email, name, comment, flowid, flowdata, flowlabel, svgdata) {
     import('got').then((module) => {
       module.got.post("https://api.flowhub.org/v1/flows", {
         headers: {
@@ -27,7 +27,8 @@ module.exports = function (RED) {
           flowid: flowid,
           flowdata: flowdata,
           flowlabel: flowlabel,
-          pushcomment: comment
+          pushcomment: comment,
+          svgdata: svgdata
         },
         timeout: {
           request: 25000,
@@ -62,7 +63,7 @@ module.exports = function (RED) {
     })
   }
 
-  function submitWithToken(access_token, comment, flowid, flowdata, flowlabel) {
+  function submitWithToken(access_token, comment, flowid, flowdata, flowlabel, svgdata) {
     import('got').then((module) => {
       module.got.post("https://api.flowhub.org/v1/flows", {
         headers: {
@@ -74,6 +75,7 @@ module.exports = function (RED) {
           flowdata: flowdata,
           flowlabel: flowlabel,
           pushcomment: comment,
+          svgdata: svgdata
         },
         timeout: {
           request: 25000,
@@ -161,10 +163,11 @@ module.exports = function (RED) {
                   respond("Failed, no API TOKEN provided nor email and name.", "error", msg)
                   return;
                 } else {
-                  submitWithEmail(cfgnode.email, cfgnode.fullname, cfgnode.pushcomment, msg.flowid, msg.flowdata, msg.flowlabel)
+                  submitWithEmail(cfgnode.email, cfgnode.fullname, cfgnode.pushcomment, 
+                                  msg.flowid, msg.flowdata, msg.flowlabel, msg.svgdata)
                 }
               } else {
-                submitWithToken(result, cfgnode.pushcomment, msg.flowid, msg.flowdata, msg.flowlabel)
+                submitWithToken(result, cfgnode.pushcomment, msg.flowid, msg.flowdata, msg.flowlabel, msg.svgdata)
               }
 
               res.sendStatus(200);
