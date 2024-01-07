@@ -2,7 +2,7 @@
   "name": "@gregoriusrippenstein/node-red-contrib-flowhub",
   "version": "0.4.4",
   "dependencies": {
-    "got": "latest"
+    "got": "~13"
   },
   "keywords": [
     "node-red",
