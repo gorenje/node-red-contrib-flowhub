@@ -329,7 +329,102 @@
          }, 300);
        });
 
-       $("#node-input-flowhubpull-sb-import-flow-but").on("click", function(e) {
+      $("#node-input-flowhubpull-sb-check-duplicates-flow-but").on("click", function(e) {
+        if ( e ) { e.preventDefault(); }
+
+        if ( $('#node-input-flowhubpull-flowid').val().trim() == "" ||
+            !$('#node-input-flowhubpull-flowid').val() ) {
+          return RED.notify(RED._("notification.warning", {
+            message: "FlowID not provided, doing nothing."
+          }), "warning");
+        }
+
+        RED.notify("Checking for flow duplication.", "success");
+
+        $.get( "https://api.flowhub.org/v1/flows/" +
+              $('#node-input-flowhubpull-flowid').val() +
+              "?cb=" + new Date().getTime() + "&v=" + 
+              $('#node-input-flowhubpull-flowrevision').val(), function(e,d) {
+                let duplicates = []
+                
+                e.forEach( (e, idx) => {
+                  if ( e.type == "tab" ) {
+                    if ( RED.nodes.workspace(e.id) ) { duplicates.push(e) }
+                  } else if ( e.type == "junction" ) {
+                    if ( RED.nodes.junction(e.id) )  { duplicates.push(e) }
+                  } else if ( e.type == "group" )    {
+                    if ( RED.nodes.group(e.id) )     { duplicates.push(e) }
+                  } else if ( e.type == "subflow" )  {
+                    if ( RED.nodes.subflow(e.id) )   { duplicates.push(e) }
+                  } else if ( RED.nodes.node(e.id) ) {
+                    duplicates.push(e)
+                  }
+                })
+
+                if ( duplicates.length == 0 ) {
+                  RED.notify("Found no duplication.", "success");
+                  
+                  try {
+                    $("#node-input-flowhubpull-sb-duplication-container-div").treeList('empty')
+                  } catch (ex) {}
+                } else {
+                  RED.notify("Found " + duplicates.length + " items of duplication", "warning");
+
+                  try {
+                      $("#node-input-flowhubpull-sb-duplication-container-div").treeList('empty')
+                  } catch (ex) {
+                      $("#node-input-flowhubpull-sb-duplication-container-div").css({
+                          width: "100%",
+                          height: "calc(100%)"
+                      }).treeList(
+                          {
+                              multi: false
+                          }
+                      ).on("treelistitemmouseover", function (e, item) {
+                      }).on("treelistitemmouseout", function (e, item) {
+                      }).on('treelistselect', function (event, item) {
+                          if (item.node) {
+                              RED.workspaces.show(item.node.z, false, false, true);
+                              RED.view.reveal(item.node.id, true)
+                              RED.view.redraw();
+                          }
+                      }).on('treelistconfirm', function (event, item) {
+                          if (item.node) {
+                              var ndeid = item.node.id;
+                              
+                              setTimeout(() => {
+                                  const nodeToShow = RED.nodes.node(ndeid)
+
+                                  if (nodeToShow) {
+                                      RED.view.reveal(nodeToShow.id);
+                                      RED.view.select(nodeToShow.id);
+                                      RED.editor.edit(nodeToShow);
+                                  }
+
+                                  if (ndeid == RED.workspaces.active()) {
+                                      RED.workspaces.edit()
+                                  }
+                              }, 50);
+                          }
+                      });
+                  }
+
+                  // add items
+                  duplicates = duplicates.map( itm => {
+                      return {
+                        node: itm,
+                        label: itm.id,
+                        sublabel: itm.type,
+                        selected: false,
+                        checkbox: false
+                      }
+                  })
+                  $("#node-input-flowhubpull-sb-duplication-container-div").treeList("data", duplicates)
+                }
+              });
+      })
+
+      $("#node-input-flowhubpull-sb-import-flow-but").on("click", function(e) {
          if ( e ) { e.preventDefault(); }
 
          ensureYourConfigNodeExists();
@@ -341,8 +436,6 @@
              message: "FlowID not provided, doing nothing."
            }), "warning");
          }
-
-         $('#node-dialog-ok').trigger('click')
 
          $.get( "https://api.flowhub.org/v1/flows/" +
                 $('#node-input-flowhubpull-flowid').val() +
@@ -364,7 +457,7 @@
                     ).trigger("paste");
                   }, 300);
                 });
-       });
+      });
 
       $('#node-input-flowhubpull-flowrevision').on('change', () => {
         ensureYourConfigNodeExists();
@@ -630,6 +723,14 @@ th.revertable:after {
             <div class="form-row" style="margin-left: 10px;">
                <button id="node-input-flowhubpull-sb-import-flow-but"
                                              class="red-ui-button">Import Flow</button>
+               <button id="node-input-flowhubpull-sb-check-duplicates-flow-but"
+                                             class="red-ui-button">Duplication?</button>
+            </div>
+
+
+            <div class="form-row node-input-target-row node-input-target-list-row"
+               style="position: relative; min-height: 100px; height: 300px; margin-left: 10px; margin-right: 15px;">            
+               <div id="node-input-flowhubpull-sb-duplication-container-div" style="min-height: 300px;"></div>
             </div>
          </div>
       </div>
