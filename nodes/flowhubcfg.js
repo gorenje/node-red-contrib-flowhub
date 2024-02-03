@@ -15,7 +15,7 @@ module.exports = function (RED) {
     );
   }
 
-  function submitWithEmail(email, name, comment, flowid, flowdata, flowlabel, svgdata) {
+  function submitWithEmail(email, name, comment, flowid, flowdata, flowlabel, svgdata, nodedetails) {
     import('got').then((module) => {
       module.got.post("https://api.flowhub.org/v1/flows", {
         headers: {
@@ -28,7 +28,8 @@ module.exports = function (RED) {
           flowdata: flowdata,
           flowlabel: flowlabel,
           pushcomment: comment,
-          svgdata: svgdata
+          svgdata: svgdata,
+          nodedetails: nodedetails
         },
         timeout: {
           request: 25000,
@@ -63,7 +64,7 @@ module.exports = function (RED) {
     })
   }
 
-  function submitWithToken(access_token, comment, flowid, flowdata, flowlabel, svgdata) {
+  function submitWithToken(access_token, comment, flowid, flowdata, flowlabel, svgdata, nodedetails) {
     import('got').then((module) => {
       module.got.post("https://api.flowhub.org/v1/flows", {
         headers: {
@@ -75,7 +76,8 @@ module.exports = function (RED) {
           flowdata: flowdata,
           flowlabel: flowlabel,
           pushcomment: comment,
-          svgdata: svgdata
+          svgdata: svgdata,
+          nodedetails: nodedetails
         },
         timeout: {
           request: 25000,
@@ -164,10 +166,11 @@ module.exports = function (RED) {
                   return;
                 } else {
                   submitWithEmail(cfgnode.email, cfgnode.fullname, cfgnode.pushcomment, 
-                                  msg.flowid, msg.flowdata, msg.flowlabel, msg.svgdata)
+                                  msg.flowid, msg.flowdata, msg.flowlabel, msg.svgdata, msg.nodedetails)
                 }
               } else {
-                submitWithToken(result, cfgnode.pushcomment, msg.flowid, msg.flowdata, msg.flowlabel, msg.svgdata)
+                submitWithToken(result, cfgnode.pushcomment, msg.flowid, msg.flowdata, 
+                                msg.flowlabel, msg.svgdata, msg.nodedetails)
               }
 
               res.sendStatus(200);
