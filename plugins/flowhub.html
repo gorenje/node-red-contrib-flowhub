@@ -135,6 +135,12 @@
          if ( e ) { e.preventDefault(); }
          ensureYourConfigNodeExists();
 
+         RED.notify("Preparing Submission", {
+            type: "warning",
+            id: "FlowHubPush",
+            timeout: 2000
+         });
+
          globalYourConfigNode.fullname = $('#node-input-flowhubpush-fullname').val();
          globalYourConfigNode.email = $('#node-input-flowhubpush-email').val();
          globalYourConfigNode.pushcomment = $('#node-input-flowhubpush-comment').val();
