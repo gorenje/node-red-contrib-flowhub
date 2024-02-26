@@ -10,6 +10,10 @@ Flows can be exported directly from the Node-RED editor to FlowHub.org. Flows th
 
 Flows can be imported into the Node-RED editor using the pull node. Flows can be imported into new tabs or directly into existing tabs.
 
+## Personal Usage
+
+Since version 0.5.0, it is possible to generate [your own FlowHub.org token](https://flowhub.org/integration) to commit flows directly to your own GitHub repository. You will then be able to perform all functionalty of the FlowHub[]().org nodes on your own personal flows.
+
 ## Details
 
 Two articles are available that better describe my intentions in creating FlowHub.org:
