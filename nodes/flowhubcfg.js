@@ -94,9 +94,14 @@ module.exports = function (RED) {
 
         if ( rst.status == "nochange") {
           respond("submission succeed but no change.", "warning", {})
-        } else {
+        } else if (rst.status == "failed") {
+          respond("submission failed: " + rst.msg, "error", {})
+        } else if (rst.status == "ok" ) {
           respond("submission succeed.", "success", {})
+        } else {
+          respond("submission failed.", "error", {})
         }
+        
       }).catch(err => {
         if (err.toString().includes("Response code 405")) {
           respond("submission failed, API Token missing/incorrect.", "error", {})
@@ -219,4 +224,52 @@ module.exports = function (RED) {
       }
     }
   );
+
+  RED.httpAdmin.post("/FlowHubTokenCheck",
+    RED.auth.needsPermission("flowhub.write"),
+    (req, res) => {
+      try {
+        if (req.body) {
+          var msg = req.body;
+          var cfgnode = req.body.cfgnode;
+          var node = RED.nodes.getNode(cfgnode.id)
+
+          RED.util.evaluateNodeProperty(cfgnode.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
+            if (err || (result || "").trim() == "") {
+              res.sendStatus(404);
+            } else {
+              if ( result.startsWith("fhb_") ) {
+                import('got').then((module) => {
+                  module.got.get("https://flowhub.org/integration/token/check?format=json&t=" + result, {
+                    headers: {
+                    },
+                    timeout: {
+                      request: 25000,
+                      response: 25000
+                    }
+                  }).then(resp => {
+                    try {
+                      res.status(200).send(JSON.parse(resp.body));
+                    } catch (err) {
+                      res.sendStatus(500);
+                    }
+                  }).catch(err => { 
+                    console.error(err)
+                    res.sendStatus(500); 
+                    });
+                }).catch(err => { res.sendStatus(500); });
+              } else {
+                res.sendStatus(404);
+              }
+            }
+          });
+        } else {
+          res.sendStatus(405);
+        }
+      } catch (err) {
+        res.sendStatus(500);
+      }
+    }
+  );
+
 }
