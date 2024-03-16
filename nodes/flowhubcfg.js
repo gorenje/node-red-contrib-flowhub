@@ -15,21 +15,23 @@ module.exports = function (RED) {
     );
   }
 
-  function submitWithEmail(email, name, comment, flowid, flowdata, flowlabel, svgdata, nodedetails) {
+  function submitWithEmail(cfgnode,msg) {
+
     import('got').then((module) => {
       module.got.post("https://api.flowhub.org/v1/flows", {
         headers: {
           "FlowHub-API-Version": "brownbear",
-          "X-Name": name,
-          "X-Email": email,
+          "X-Name": cfgnode.fullname,
+          "X-Email": cfgnode.email,
         },
         json: {
-          flowid: flowid,
-          flowdata: flowdata,
-          flowlabel: flowlabel,
-          pushcomment: comment,
-          svgdata: svgdata,
-          nodedetails: nodedetails
+          flowid: msg.flowid,
+          flowdata: msg.flowdata,
+          flowlabel: msg.flowlabel,
+          pushcomment: cfgnode.pushcomment,
+          pushnewflows: cfgnode.pushnewflows,
+          svgdata: msg.svgdata,
+          nodedetails: msg.nodedetails
         },
         timeout: {
           request: 25000,
@@ -64,7 +66,8 @@ module.exports = function (RED) {
     })
   }
 
-  function submitWithToken(access_token, comment, flowid, flowdata, flowlabel, svgdata, nodedetails) {
+  function submitWithToken(access_token, cfgnode, msg) {
+
     import('got').then((module) => {
       module.got.post("https://api.flowhub.org/v1/flows", {
         headers: {
@@ -72,12 +75,13 @@ module.exports = function (RED) {
           "Authorization": "Bearer " + access_token,
         },
         json: {
-          flowid: flowid,
-          flowdata: flowdata,
-          flowlabel: flowlabel,
-          pushcomment: comment,
-          svgdata: svgdata,
-          nodedetails: nodedetails
+          flowid: msg.flowid,
+          flowdata: msg.flowdata,
+          flowlabel: msg.flowlabel,
+          pushcomment: cfgnode.pushcomment,
+          pushnewflows: cfgnode.pushnewflows,
+          svgdata: msg.svgdata,
+          nodedetails: msg.nodedetails
         },
         timeout: {
           request: 25000,
@@ -176,12 +180,10 @@ module.exports = function (RED) {
                   respond("Failed, no API TOKEN provided nor email and name.", "error", msg)
                   return;
                 } else {
-                  submitWithEmail(cfgnode.email, cfgnode.fullname, cfgnode.pushcomment, 
-                                  msg.flowid, msg.flowdata, msg.flowlabel, msg.svgdata, msg.nodedetails)
+                  submitWithEmail(cfgnode,msg)
                 }
               } else {
-                submitWithToken(result, cfgnode.pushcomment, msg.flowid, msg.flowdata, 
-                                msg.flowlabel, msg.svgdata, msg.nodedetails)
+                submitWithToken(result, cfgnode, msg)
               }
 
               res.sendStatus(200);

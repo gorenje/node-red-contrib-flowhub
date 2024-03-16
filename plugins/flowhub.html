@@ -47,23 +47,24 @@
          let typ = RED.nodes.getType("FlowHubCfg");
          
          globalYourConfigNode = {
-             id: RED.nodes.id(), // on the server side, this is called RED.util.generateId()
-             _def: typ,
-             type: "FlowHubCfg",
-             hasUsers: false, 
-             users: [],
-             name: "FlowHubCfg",
-             label: function() { return this.name || "FlowHubCfg"},
-             /* default data */
-             apiToken: typ.defaults.apiToken.value,
-             apiTokenType: typ.defaults.apiTokenType.value,
-             email: "",
-             fullname: "",
-             flowid: "",
-             flowrevision: "",
-             notab: false,
-             pushcomment: "",
-             tokens: typ.defaults.tokens.value,
+            id: RED.nodes.id(), // on the server side, this is called RED.util.generateId()
+            _def: typ,
+            type: "FlowHubCfg",
+            hasUsers: false, 
+            users: [],
+            name: "FlowHubCfg",
+            label: function() { return this.name || "FlowHubCfg"},
+            /* default data */
+            apiToken: typ.defaults.apiToken.value,
+            apiTokenType: typ.defaults.apiTokenType.value,
+            email: "",
+            fullname: "",
+            flowid: "",
+            flowrevision: "",
+            notab: false,
+            pushcomment: "",
+            pushnewflows: false,
+            tokens: typ.defaults.tokens.value,
          }
 
          // Add the new config node to the collection of Node-RED nodes
@@ -368,7 +369,6 @@
         }, 300);
        });
 
-
       $('#node-input-flowhubpush-new-token-field').on('change', e => {
         $('#flowhubpush-check-token-result-content').fadeOut(300, () => {
           $.get({
@@ -479,6 +479,14 @@
           doFlowImport(notab, token)
         })
       });
+
+      $('#node-input-flowhubpush-pushnewflows').prop('checked', globalYourConfigNode.pushnewflows)
+
+      $('#node-input-flowhubpush-pushnewflows').on('change', () => {
+        ensureYourConfigNodeExists();
+        globalYourConfigNode.pushnewflows = $('#node-input-flowhubpush-pushnewflows').is(":checked")
+        RED.nodes.dirty(true);
+      })
 
       $('#node-input-flowhubpull-flowrevision').on('change', () => {
         ensureYourConfigNodeExists();
@@ -639,6 +647,14 @@
 
             <div class="form-row" style="margin-left: 10px;">
                Check out the instructions for generating your own <a style="color: blue;" target="_blank" href="https://flowhub.org/integration">FlowHub.org token <i class='fa fa-external-link'></i></a>. You will then be able to commit your Node-RED flows directly to your own GitHub repository - public or private. You will also be able to view those flows at FlowHub.org using the "View Flow" links.
+            </div>
+
+            <div class="form-row" style="margin-left: 10px;">
+               <input type="checkbox" id="node-input-flowhubpush-pushnewflows"
+                  style="display:inline-block; width:15px; vertical-align:baseline;">
+               <label for="node-input-flowhubpush-pushnewflows" style="width: 230px;">
+                  <span>Create new flows when pushing?</span>
+               </label>
             </div>
 
             <div class="form-row" style="margin-left: 10px;">
