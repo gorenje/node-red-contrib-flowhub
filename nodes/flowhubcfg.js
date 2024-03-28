@@ -78,6 +78,7 @@ module.exports = function (RED) {
           flowid: msg.flowid,
           flowdata: msg.flowdata,
           flowlabel: msg.flowlabel,
+          flowrevision: cfgnode.flowrevisions[msg.flowid] || "",
           pushcomment: cfgnode.pushcomment,
           pushnewflows: cfgnode.pushnewflows,
           svgdata: msg.svgdata,
@@ -96,14 +97,19 @@ module.exports = function (RED) {
           return
         }
 
+        let respObj = {
+          flowid: rst.flowid,
+          flowrevision: rst.revision
+        }
+
         if ( rst.status == "nochange") {
-          respond("submission succeed but no change.", "warning", {})
+          respond("submission succeed but no change.", "warning", respObj)
         } else if (rst.status == "failed") {
-          respond("submission failed: " + rst.msg, "error", {})
+          respond("submission failed: " + rst.msg, "error", respObj)
         } else if (rst.status == "ok" ) {
-          respond("submission succeed.", "success", {})
+          respond("submission succeed.", "success", respObj)
         } else {
-          respond("submission failed.", "error", {})
+          respond("submission failed.", "error", respObj)
         }
         
       }).catch(err => {
