@@ -78,7 +78,7 @@ module.exports = function (RED) {
           flowid: msg.flowid,
           flowdata: msg.flowdata,
           flowlabel: msg.flowlabel,
-          flowrevision: cfgnode.flowrevisions[msg.flowid] || "",
+          flowrevision: (cfgnode.flowrevisions || {})[msg.flowid] || "",
           pushcomment: cfgnode.pushcomment,
           pushnewflows: cfgnode.pushnewflows,
           svgdata: msg.svgdata,
