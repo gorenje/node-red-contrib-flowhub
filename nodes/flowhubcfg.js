@@ -183,7 +183,7 @@ module.exports = function (RED) {
               if (err || (result || "").trim() == "") {
                 if ((cfgnode.fullname || "").trim() == "" || (cfgnode.email || "").trim() == "") {
                   res.sendStatus(200);
-                  respond("Failed, no API TOKEN provided nor email and name.", "error", msg)
+                  respond("Push failed, no token provided. <a target=_blank href='https://flowhub.org/integration'>Get your token <i class='fa fa-external-link'></i></a>.", "error", msg)
                   return;
                 } else {
                   submitWithEmail(cfgnode,msg)

@@ -4,8 +4,8 @@
       category: 'config',
       hasUsers: false,
       defaults: {
-        apiToken: { value: "FLOWHUB_API_TOKEN" },      
-        apiTokenType: { value: "env" },
+        apiToken: { value: "" },      
+        apiTokenType: { value: "" },
         fullname: { value: "" },
         email: { value: "" },
         flowid: { value: "" },
@@ -13,11 +13,8 @@
         notab: { value: false },
         pushcomment: { value: "" },
         pushnewflows: { value: false },
-        tokens: { value: [{
-          name: "FlowHub Token",
-          type: "env",
-          val: "FLOWHUB_API_TOKEN"
-        }]},
+        forcepush: { value: false },
+        tokens: { value: [] },
         flowrevisions: { value: {} }
       },
       label: 'FlowHubCfg',
