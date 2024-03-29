@@ -9,8 +9,8 @@ module.exports = function (RED) {
       if (cfg.flowid || msg.flowid) {
         import('got').then((module) => {
           module.got.get(
-            "https://api.flowhub.org/v2/flows/" + (cfg.flowid || msg.flowid) + 
-            "?cb=" + new Date().getTime() + "&v=" + (cfg.flowrevision || msg.flowrevision || ""),
+            "https://api.flowhub.org/v2/flows/" + (cfg.flowid || msg.flowid).trim() + 
+            "?cb=" + new Date().getTime() + "&v=" + (cfg.flowrevision || msg.flowrevision || "").trim(),
           {
               headers: {
                 "FlowHub-API-Version": "brownbear",

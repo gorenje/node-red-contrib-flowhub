@@ -16,54 +16,7 @@ module.exports = function (RED) {
   }
 
   function submitWithEmail(cfgnode,msg) {
-
-    import('got').then((module) => {
-      module.got.post("https://api.flowhub.org/v1/flows", {
-        headers: {
-          "FlowHub-API-Version": "brownbear",
-          "X-Name": cfgnode.fullname,
-          "X-Email": cfgnode.email,
-        },
-        json: {
-          flowid: msg.flowid,
-          flowdata: msg.flowdata,
-          flowlabel: msg.flowlabel,
-          pushcomment: cfgnode.pushcomment,
-          pushnewflows: cfgnode.pushnewflows,
-          svgdata: msg.svgdata,
-          nodedetails: msg.nodedetails
-        },
-        timeout: {
-          request: 25000,
-          response: 25000
-        }
-      }).then(resp => {
-
-        try {
-          var rst = JSON.parse(resp.body)
-        } catch (err) {
-          respond("response failed", "error", {})
-          return
-        }
-
-        if ( rst.status == "ok") {
-          respond("submission succeed, please verify your email.", "success", {})
-        } else {
-          respond("submission failed: " + rst.msg, "error", { })
-        }
-      }).catch(err => {
-
-        if (err.toString().includes("Response code 405")) {
-          respond("submission failed, Email/Name not supplied or allowed.", "error", {})
-        } else {
-          respond("submission failed: " + err, "error", {})
-          console.error(err)
-        }
-      });
-    }).catch( err => { 
-      respond("submission failed, Internal Error: " + err, "error", {})
-      console.error(err)
-    })
+    respond("submission with email no longer supported.", "error", {})
   }
 
   function submitWithToken(access_token, cfgnode, msg) {
@@ -81,6 +34,7 @@ module.exports = function (RED) {
           flowrevision: (cfgnode.flowrevisions || {})[msg.flowid] || "",
           pushcomment: cfgnode.pushcomment,
           pushnewflows: cfgnode.pushnewflows,
+          forcepush: cfgnode.forcepush,
           svgdata: msg.svgdata,
           nodedetails: msg.nodedetails
         },
