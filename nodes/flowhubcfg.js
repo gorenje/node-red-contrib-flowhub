@@ -28,15 +28,15 @@ module.exports = function (RED) {
           "Authorization": "Bearer " + access_token,
         },
         json: {
-          flowid: msg.flowid,
-          flowdata: msg.flowdata,
-          flowlabel: msg.flowlabel,
+          flowid:       msg.flowid,
+          flowdata:     msg.flowdata,
+          flowlabel:    msg.flowlabel,
+          svgdata:      msg.svgdata,
+          nodedetails:  msg.nodedetails,
           flowrevision: (cfgnode.flowrevisions || {})[msg.flowid] || "",
-          pushcomment: cfgnode.pushcomment,
+          pushcomment:  cfgnode.pushcomment,
           pushnewflows: cfgnode.pushnewflows,
-          forcepush: cfgnode.forcepush,
-          svgdata: msg.svgdata,
-          nodedetails: msg.nodedetails
+          forcepush:    cfgnode.forcepush,
         },
         timeout: {
           request: 25000,
