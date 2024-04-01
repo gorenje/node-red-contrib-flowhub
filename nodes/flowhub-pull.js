@@ -30,11 +30,13 @@ module.exports = function (RED) {
                   return node.error("access denied")
                 }
 
+                /* ***** option removed from the frontend, ignore it's value.
                 if (cfg.notab) {
                   payload = payload.filter((nde) => {
                     return nde.type != "tab";
                   })
                 }
+                */
 
                 /* collect the package details */
                 let nodedetails = "[]"
