@@ -187,6 +187,61 @@ module.exports = function (RED) {
     }
   );
 
+  RED.httpAdmin.post("/FlowHubCatalogue",
+    RED.auth.needsPermission("flowhub.write"),
+    (req, res) => {
+      try {
+        if (req.body) {
+          var msg = req.body;
+          import('got').then((module) => {
+            module.got.get("https://api.flowhub.org/v1/flows?cb=" + new Date().getTime(), {
+              headers: {
+                "X-FHB-TOKEN": msg.token
+              },
+              timeout: {
+                request: 25000,
+                response: 25000
+              }
+            }).then( resp => {
+              try {
+                res.status(200).send(JSON.parse(resp.body));
+              } catch (err) {
+                res.sendStatus(500);
+              }
+            }).catch( err => {
+              console.error(err)
+              res.sendStatus(500);
+            })
+          }).catch(err => { res.sendStatus(500); });            
+        } else {
+          res.sendStatus(405);
+        }
+      } catch (ex) {
+        res.sendStatus(500);
+      }
+  });
+
+  RED.httpAdmin.get('/FlowHubLib/jslib/:libraryname', function (req, res) {
+    let redirectLocation = {}
+    const path = require('path');
+    const fs = require('fs')
+
+    try {
+      switch (req.params.libraryname) {
+      case "diff.min.js":
+        redirectLocation = { Location: 'https://cdn.openmindmap.org/thirdparty/diff.min.js' }
+        let filename = path.resolve(path.dirname(__filename), "..", "vendor", "diff.min.js")
+
+        if ( fs.existsSync( filename )) {
+          return res.sendFile(filename)
+        }
+      }
+    } catch (ex) {}
+
+    res.writeHead(302, redirectLocation )
+    return res.end();
+  });
+
   RED.httpAdmin.post("/FlowHubTokenCheck",
     RED.auth.needsPermission("flowhub.write"),
     (req, res) => {
