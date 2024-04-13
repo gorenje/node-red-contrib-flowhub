@@ -9,7 +9,9 @@
     "flowhub",
     "flow-sharing",
     "collaborative",
-    "flow-development"
+    "flow-development",
+    "flow-management",
+    "github"
   ],
   "homepage": "https://flowhub.org/f/4a831589774ecb04",
   "license": "Don't be Evil.",
@@ -27,7 +29,7 @@
       "flowhubcfg": "nodes/flowhubcfg.js"
     }
   },
-  "description": "Nodes for interacting with FlowHub.org.",
+  "description": "FlowHub.org: flow management with GitHub.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gorenje/node-red-contrib-flowhub.git"

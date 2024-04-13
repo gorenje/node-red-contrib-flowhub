@@ -1,18 +1,18 @@
-## FlowHub: Gist for Node-RED
+## FlowHub: Flow management with GitHub
 
 These are the Node-RED nodes that interact with [FlowHub.org](https://flowhub.org).
 
-[FlowHub.org](https://FlowHub.org) is an experimental first attempt to provide a gist/pastebin-like service for Node-RED.
+[FlowHub.org](https://FlowHub.org) is platform for managing flows using GitHub. For more details, a [video introduction](https://flowhub.org/introduction) is now available.
 
 The aim is to make it easy to share flow-tabs amongst Node-RED developers.
 
-Flows can be exported directly from the Node-RED editor to FlowHub.org. Flows that have been edited but not deployed can be exported. Flows are taken from the editor not the Node-RED server.
+Flows can be exported directly from the Node-RED editor to GitHub. Flows that have been edited but not deployed can be exported. Flows are taken from the editor not the Node-RED server.
 
 Flows can be imported into the Node-RED editor using the pull node. Flows can be imported into new tabs or directly into existing tabs.
 
 ## Personal Usage
 
-Since version 0.5.0, it is possible to generate [your own FlowHub.org token](https://flowhub.org/integration) to commit flows directly to your own GitHub repository. You will then be able to perform all functionalty of the FlowHub[]().org nodes on your own personal flows.
+Generate [your own FlowHub.org token](https://flowhub.org/integration) to commit flows directly to your own GitHub repository. You will then be able to perform all functionalty of the FlowHub[]().org nodes on your own personal flows.
 
 ## Details
 
