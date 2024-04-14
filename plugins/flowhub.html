@@ -256,7 +256,8 @@
 
           if ( cfgNode.flowrevisions[data.flowid] != data.flowrevision ) {
             cfgNode.flowrevisions[data.flowid] = data.flowrevision
-            $('#node-input-flowhubpush-comment').val("")
+            cfgNode.pushcomment = ""
+            $('#node-input-flowhubpush-comment').val(cfgNode.pushcomment)
             RED.nodes.dirty(true)
           }
         }
