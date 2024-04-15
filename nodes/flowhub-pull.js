@@ -14,7 +14,8 @@ module.exports = function (RED) {
           {
               headers: {
                 "FlowHub-API-Version": "brownbear",
-                "X-FHB-TOKEN": token
+                "X-FHB-TOKEN": token,
+                "User-Agent": "FlowHub.org Pull Node Msg"
               },
               timeout: {
                 request: 25000,
