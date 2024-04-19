@@ -2,13 +2,17 @@
 
 These are the Node-RED nodes that interact with [FlowHub.org](https://flowhub.org).
 
-[FlowHub.org](https://FlowHub.org) is platform for managing flows using GitHub. For more details, a [video introduction](https://flowhub.org/introduction) is now available.
+[FlowHub.org](https://FlowHub.org) is platform for managing flows using GitHub. 
 
 The aim is to make it easy to share flow-tabs amongst Node-RED developers.
 
 Flows can be exported directly from the Node-RED editor to GitHub. Flows that have been edited but not deployed can be exported. Flows are taken from the editor not the Node-RED server.
 
 Flows can be imported into the Node-RED editor using the pull node. Flows can be imported into new tabs or directly into existing tabs.
+
+## Screencasts
+
+To learn more, check out the [introduction screencast](https://flowhub.org/introduction) and the followup [use case screencast](https://flowhub.org/use-cases).
 
 ## Personal Usage
 
