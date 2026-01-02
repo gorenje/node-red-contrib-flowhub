@@ -3,7 +3,12 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config)
   }
   
-  RED.nodes.registerType('FlowHubCfg', ConfigFlowHubPushFunctionality);
+  RED.nodes.registerType('FlowHubCfg', ConfigFlowHubPushFunctionality, {
+    credentials: {
+      apiToken: { type: "text" },
+      tokens: {}
+    }
+  });
 
   function respond(status, statustype, msg) {
     RED.comms.publish("flowhub:submission-result",
@@ -90,7 +95,7 @@ module.exports = function (RED) {
           var cfgnode = req.body.cfgnode;
           var node = RED.nodes.getNode(cfgnode.id)
 
-          RED.util.evaluateNodeProperty(cfgnode.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
+          RED.util.evaluateNodeProperty(cfgnode.credentials.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
             import('got').then((module) => {
               module.got.post("https://api.flowhub.org/v1/diff", {
                 headers: {
@@ -133,7 +138,7 @@ module.exports = function (RED) {
             var cfgnode = req.body.cfgnode;
             var node = RED.nodes.getNode(cfgnode.id)
 
-            RED.util.evaluateNodeProperty(cfgnode.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
+            RED.util.evaluateNodeProperty(cfgnode.credentials.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
               if (err || (result || "").trim() == "") {
                 if ((cfgnode.fullname || "").trim() == "" || (cfgnode.email || "").trim() == "") {
                   res.sendStatus(200);
@@ -167,7 +172,7 @@ module.exports = function (RED) {
           var cfgnode = req.body.cfgnode;
           var node = RED.nodes.getNode(cfgnode.id)
 
-          RED.util.evaluateNodeProperty(cfgnode.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
+          RED.util.evaluateNodeProperty(cfgnode.credentials.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
             if (err || (result || "").trim() == "") {
               res.sendStatus(404);
             } else {
@@ -178,6 +183,32 @@ module.exports = function (RED) {
               }
             }
           });
+        } else {
+          res.sendStatus(405);
+        }
+      } catch (err) {
+        res.sendStatus(500);
+      }
+    }
+  );
+
+  // complete list of stored tokens
+  RED.httpAdmin.post("/FlowHubTokens",
+    RED.auth.needsPermission("flowhub.write"),
+    (req, res) => {
+      try {
+        if (req.body) {
+          var msg = req.body;
+          var cfgnode = req.body.cfgnode;
+          var node = RED.nodes.getNode(cfgnode.id)
+
+          if (!node) {
+            node = { credentials: {
+              tokens: [], apiToken: ""
+            }}
+          }
+          
+          res.status(200).send({tokens: node.credentials.tokens, apiToken: node.credentials.apiToken});
         } else {
           res.sendStatus(405);
         }
@@ -251,7 +282,7 @@ module.exports = function (RED) {
           var cfgnode = req.body.cfgnode;
           var node = RED.nodes.getNode(cfgnode.id)
 
-          RED.util.evaluateNodeProperty(cfgnode.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
+          RED.util.evaluateNodeProperty(cfgnode.credentials.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
             if (err || (result || "").trim() == "") {
               res.sendStatus(404);
             } else {

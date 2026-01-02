@@ -49,8 +49,7 @@
             name: "FlowHubCfg",
             label: function() { return this.name || "FlowHubCfg"},
             /* default data */
-            apiToken: typ.defaults.apiToken.value,
-            apiTokenType: typ.defaults.apiTokenType.value,
+            apiTokenType: "cred",
             email: "",
             fullname: "",
             flowid: "",
@@ -58,9 +57,12 @@
             notab: false,
             pushcomment: "",
             pushnewflows: false,
-            tokens: typ.defaults.tokens.value,
-            flowrevisions: typ.defaults.flowrevisions.value,
-            forcepush: false
+            tokens: [],
+            forcepush: false,
+            credentials: {
+              tokens: [],
+              apiToken: ""
+            }
          }
 
          // Add the new config node to the collection of Node-RED nodes
@@ -68,7 +70,7 @@
 
          // Make sure the "Deploy" button becomes active
          RED.nodes.dirty(true);
-      }    
+      }   
       
       return globalYourConfigNode
    }
@@ -151,7 +153,7 @@
          doComparison( getFlowDataFromCurrentWorkspace(), globalYourConfigNode)
       })
 
-      $('#node-input-flowhubdiff-next-change-btn').on( 'click', showNextChangeButtonPressed)
+      $('#node-input-flowhubdiff-next-change-btn').on('click', showNextChangeButtonPressed)
 
       $('#node-input-flowhubpush-push-btn').on('click', (e) => {
          if ( e ) { e.preventDefault(); }
@@ -177,18 +179,39 @@
         RED.nodes.dirty()
       }
 
-      globalYourConfigNode.tokens.forEach( tk => {
-        addTokenToList((tk.val == globalYourConfigNode.apiToken ? "flowhub-token-selected" : ""), tk)
-      })
-      addEventHandlersToTokenList(globalYourConfigNode)
+      $.ajax({
+        url: "FlowHubTokens",
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+
+        data: JSON.stringify({
+          cfgnode: globalYourConfigNode,
+        }),
+
+        success: function (resp) {
+          if ( !globalYourConfigNode.credentials) {
+            globalYourConfigNode.credentials = { apiToken: resp.apiToken, tokens: resp.tokens }
+          }
+
+          globalYourConfigNode.tokens = resp.tokens
+          $("#node-input-flowhubpush-apiToken").typedInput( 'value', resp.apiToken);
+          
+          resp.tokens.forEach( tk => {
+             addTokenToList((tk.val == resp.apiToken ? "flowhub-token-selected" : ""), tk)
+          })
+          addEventHandlersToTokenList(globalYourConfigNode)
+        },
+
+        error: function (jqXHR, textStatus, errorThrown) {}
+      });
 
       $("#node-input-flowhubpush-apiToken").typedInput({
           types:["env", "global", "cred"],
           typeField: "#node-input-flowhubpush-apiTokenType"
       });
 
-      $("#node-input-flowhubpush-apiToken").typedInput( 'value', globalYourConfigNode.apiToken || globalYourConfigNode._def.defaults.apiToken.value );
-      $("#node-input-flowhubpush-apiToken").typedInput( 'type', globalYourConfigNode.apiTokenType || globalYourConfigNode._def.defaults.apiTokenType.value);
+      $("#node-input-flowhubpush-apiToken").typedInput( 'value', "");
+      $("#node-input-flowhubpush-apiToken").typedInput( 'type', "cred");
 
       $("#node-input-flowhubpush-apiToken").on('change', () => {
          ensureYourConfigNodeExists();
@@ -197,7 +220,8 @@
          var typ = $("#node-input-flowhubpush-apiToken").typedInput('type');
 
          if ( val != globalYourConfigNode.apiToken ) {
-            globalYourConfigNode.apiToken = val;
+            if (!globalYourConfigNode.credentials) { globalYourConfigNode.credentials = {}}
+            globalYourConfigNode.credentials.apiToken = val;
             RED.nodes.dirty(true);
          }
 
@@ -404,7 +428,11 @@
        });
 
       $('#node-input-flowhubpush-new-token-field').on('change', e => {
-        checkToken($('#node-input-flowhubpush-new-token-field').val())
+        if ($('#node-input-flowhubpush-new-token-field').val()) {
+          checkToken($('#node-input-flowhubpush-new-token-field').val())
+        } else {
+          $('#flowhubpush-check-token-result-content').fadeOut(300)
+        }
       })
 
       $('#node-input-flowhubpush-clear-token-btn').on('click', e => {
@@ -430,6 +458,11 @@
         }
 
         globalYourConfigNode.tokens.push(tk)
+        if (!globalYourConfigNode.credentials) {
+          globalYourConfigNode.credentials = { tokens: globalYourConfigNode.tokens }
+        } else {
+          globalYourConfigNode.credentials.tokens = globalYourConfigNode.tokens
+        }
         RED.nodes.dirty(true);
 
         addTokenToList("",tk)

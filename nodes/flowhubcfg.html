@@ -3,9 +3,12 @@
    RED.nodes.registerType('FlowHubCfg', {
       category: 'config',
       hasUsers: false,
+      credentials: {
+        apiToken: { type: "text" },
+        tokens: {}
+      },
       defaults: {
-        apiToken: { value: "" },      
-        apiTokenType: { value: "" },
+        apiTokenType: { type: "cred" },
         fullname: { value: "" },
         email: { value: "" },
         flowid: { value: "" },
@@ -14,7 +17,6 @@
         pushcomment: { value: "" },
         pushnewflows: { value: false },
         forcepush: { value: false },
-        tokens: { value: [] },
         flowrevisions: { value: {} }
       },
       label: 'FlowHubCfg',
