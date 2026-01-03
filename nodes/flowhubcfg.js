@@ -94,32 +94,35 @@ module.exports = function (RED) {
 
           var cfgnode = req.body.cfgnode;
           var node = RED.nodes.getNode(cfgnode.id)
+          var apiToken = cfgnode.apiToken
 
-          RED.util.evaluateNodeProperty(cfgnode.credentials.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
-            import('got').then((module) => {
-              module.got.post("https://api.flowhub.org/v1/diff", {
-                headers: {
-                  "FlowHub-API-Version": "brownbear",
-                  "X-FHB-TOKEN": result
-                },
-                json: {
-                  flowid: msg.flowid,
-                  flowdata: msg.flowdata,
-                  flowlabel: msg.flowlabel,
-                },
-                timeout: {
-                  request: 25000,
-                  response: 25000
-                }
-              }).then(resp => {
-                try {
-                  res.status(200).send(JSON.parse(resp.body));
-                } catch (err) {
-                  res.sendStatus(500);
-                }
-              }).catch(err => { res.sendStatus(500); });
+          if (!apiToken && node && node.credentials) {
+            apiToken = node.credentials.apiToken
+          }
+
+          import('got').then((module) => {
+            module.got.post("https://api.flowhub.org/v1/diff", {
+              headers: {
+                "FlowHub-API-Version": "brownbear",
+                "X-FHB-TOKEN": apiToken
+              },
+              json: {
+                flowid: msg.flowid,
+                flowdata: msg.flowdata,
+                flowlabel: msg.flowlabel,
+              },
+              timeout: {
+                request: 25000,
+                response: 25000
+              }
+            }).then(resp => {
+              try {
+                res.status(200).send(JSON.parse(resp.body));
+              } catch (err) {
+                res.sendStatus(500);
+              }
             }).catch(err => { res.sendStatus(500); });
-          })
+          }).catch(err => { res.sendStatus(500); });
         } else {
           res.sendStatus(405);
         }
@@ -127,7 +130,6 @@ module.exports = function (RED) {
         res.sendStatus(500);
       }
   });
-
 
   RED.httpAdmin.post("/FlowHubPush",
     RED.auth.needsPermission("flowhub.write"),
@@ -137,22 +139,21 @@ module.exports = function (RED) {
             var msg = req.body;
             var cfgnode = req.body.cfgnode;
             var node = RED.nodes.getNode(cfgnode.id)
+            var apiToken = cfgnode.apiToken
 
-            RED.util.evaluateNodeProperty(cfgnode.credentials.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
-              if (err || (result || "").trim() == "") {
-                if ((cfgnode.fullname || "").trim() == "" || (cfgnode.email || "").trim() == "") {
-                  res.sendStatus(200);
-                  respond("Push failed, no token provided. <a target=_blank href='https://flowhub.org/integration'>Get your token <i class='fa fa-external-link'></i></a>.", "error", msg)
-                  return;
-                } else {
-                  submitWithEmail(cfgnode,msg)
-                }
-              } else {
-                submitWithToken(result, cfgnode, msg)
-              }
+            if (!apiToken && node && node.credentials) {
+              apiToken = node.credentials.apiToken
+            }
 
+            if (apiToken.trim() == "") {
               res.sendStatus(200);
-            });
+              respond("Push failed, no token provided. <a target=_blank href='https://flowhub.org/integration'>Get your token <i class='fa fa-external-link'></i></a>.", "error", msg)
+              return;
+            } else {
+              submitWithToken(apiToken, cfgnode, msg)
+            }
+
+            res.sendStatus(200);
           } else {
             res.sendStatus(405);
           }
@@ -168,21 +169,26 @@ module.exports = function (RED) {
     (req, res) => {
       try {
         if (req.body) {
-          var msg = req.body;
           var cfgnode = req.body.cfgnode;
           var node = RED.nodes.getNode(cfgnode.id)
 
-          RED.util.evaluateNodeProperty(cfgnode.credentials.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
-            if (err || (result || "").trim() == "") {
-              res.sendStatus(404);
+          var apiToken = cfgnode.apiToken
+
+          if (!apiToken && node && node.credentials) {
+            apiToken = node.credentials.apiToken
+          }
+
+          if ( apiToken == "empty") { apiToken = "" }
+
+          if (apiToken.trim() == "") {
+            res.sendStatus(404);
+          } else {
+            if ( apiToken.startsWith("fhb_") ) {
+              res.status(200).send({ token: apiToken });
             } else {
-              if ( result.startsWith("fhb_") ) {
-                res.status(200).send({token: result});
-              } else {
-                res.sendStatus(404);
-              }
+              res.sendStatus(404);
             }
-          });
+          }
         } else {
           res.sendStatus(405);
         }
@@ -198,7 +204,6 @@ module.exports = function (RED) {
     (req, res) => {
       try {
         if (req.body) {
-          var msg = req.body;
           var cfgnode = req.body.cfgnode;
           var node = RED.nodes.getNode(cfgnode.id)
 
@@ -224,6 +229,7 @@ module.exports = function (RED) {
       try {
         if (req.body) {
           var msg = req.body;
+
           import('got').then((module) => {
             module.got.get("https://api.flowhub.org/v1/flows?cb=" + new Date().getTime(), {
               headers: {
@@ -278,39 +284,41 @@ module.exports = function (RED) {
     (req, res) => {
       try {
         if (req.body) {
-          var msg = req.body;
           var cfgnode = req.body.cfgnode;
           var node = RED.nodes.getNode(cfgnode.id)
 
-          RED.util.evaluateNodeProperty(cfgnode.credentials.apiToken, cfgnode.apiTokenType, node, msg, (err, result) => {
-            if (err || (result || "").trim() == "") {
-              res.sendStatus(404);
+          let apiToken = ""
+          if (node && node.credentials) {
+            apiToken = node.credentials.apiToken
+          }
+
+          if (apiToken.trim() == "") {
+            res.sendStatus(404);
+          } else {
+            if ( apiToken.startsWith("fhb_") ) {
+              import('got').then((module) => {
+                module.got.get("https://flowhub.org/integration/token/check?format=json&t=" + result, {
+                  headers: {
+                  },
+                  timeout: {
+                    request: 25000,
+                    response: 25000
+                  }
+                }).then(resp => {
+                  try {
+                    res.status(200).send(JSON.parse(resp.body));
+                  } catch (err) {
+                    res.sendStatus(500);
+                  }
+                }).catch(err => { 
+                  console.error(err)
+                  res.sendStatus(500); 
+                  });
+              }).catch(err => { res.sendStatus(500); });
             } else {
-              if ( result.startsWith("fhb_") ) {
-                import('got').then((module) => {
-                  module.got.get("https://flowhub.org/integration/token/check?format=json&t=" + result, {
-                    headers: {
-                    },
-                    timeout: {
-                      request: 25000,
-                      response: 25000
-                    }
-                  }).then(resp => {
-                    try {
-                      res.status(200).send(JSON.parse(resp.body));
-                    } catch (err) {
-                      res.sendStatus(500);
-                    }
-                  }).catch(err => { 
-                    console.error(err)
-                    res.sendStatus(500); 
-                    });
-                }).catch(err => { res.sendStatus(500); });
-              } else {
-                res.sendStatus(404);
-              }
+              res.sendStatus(404);
             }
-          });
+          }
         } else {
           res.sendStatus(405);
         }
