@@ -427,11 +427,17 @@
         }
 
         let tk = {
-          name: $('#node-input-flowhubpush-new-token-name-field').val(),
+          name: $('#node-input-flowhubpush-new-token-name-field').val() || "",
           type: "cred",
-          val: $('#node-input-flowhubpush-new-token-field').val()
+          val: $('#node-input-flowhubpush-new-token-field').val() || "empty"
         }
 
+        if (tk.name == "") {
+          return RED.notify(RED._("notification.warning", {
+            message: "Token name empty, doing nothing."
+          }), "warning");          
+        }
+        
         globalYourConfigNode.tokens.push(tk)
         if (!globalYourConfigNode.credentials) {
           globalYourConfigNode.credentials = { tokens: globalYourConfigNode.tokens }
