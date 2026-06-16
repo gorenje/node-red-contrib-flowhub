@@ -76,380 +76,302 @@
    }
 
    function flowHubPullUpdateFlows(e=null,o=null){let t=t=>{if($("#func-sidebar-flowhub-pull-spinner").hide(),$("#node-input-flowhub-pull-spinner").hide(),"failed"==t.status)return RED.notify(t.msg,{type:"error",id:"FlowHubPull",timeout:4e3});let i=[],r={},l=[];Object.keys(t.data).forEach(function(e){var o=t.data[e].name.match(/^(\[.+\])/);o?r[o[0]]?r[o[0]].push(t.data[e]):r[o[0]]=[t.data[e]]:l.push(t.data[e])}),Object.keys(r).sort((e,o)=>e<o?-1:1).forEach(e=>{var o=r[e].map(e=>({label:e.name,icon:"fa "+(RED.nodes.workspace(e.id)?"fa-check-circle-o":""),flowid:e.id,sublabel:e.id,selected:$("#node-input-flowhubpull-flowid").val()==e.id,checkbox:!1,children:void 0}));i.push({label:e,icon:"",flowid:"",sublabel:"",selected:!1,checkbox:!1,children:o.sort((e,o)=>e.label<o.label?-1:1)})}),l.sort((e,o)=>e.name<o.name?-1:1).forEach(e=>{i.push({label:e.name,icon:"fa "+(RED.nodes.workspace(e.id)?"fa-check-circle-o":""),flowid:e.id,sublabel:e.id,selected:$("#node-input-flowhubpull-flowid").val()==e.id,checkbox:!1,children:void 0})}),e&&e(i)};$.get({url:"https://api.flowhub.org/v1/flows?cb="+(new Date).getTime(),headers:{"X-FHB-TOKEN":o}}).done(e=>{t(e)}).fail(e=>{var i="";"rejected"==e.state()?$.ajax({url:"FlowHubCatalogue",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({token:o}),success:function(e){t(e)},error:function(e,o,t){$("#func-sidebar-flowhub-pull-spinner").hide(),$("#node-input-flowhub-pull-spinner").hide(),i="<p>Failed to retrieve FlowHub catalogue, request blocked.</p><p>Request: <b>https://api.flowhub.org/v1/flows</b></p><p>AdBlocker or uBlock might have prevented request.</p><p>Please check browser console for more details.</p>",console.log("Error",o),RED.notify(i,{type:"error",id:"FlowHubPull",timeout:4e3})}}):($("#func-sidebar-flowhub-pull-spinner").hide(),$("#node-input-flowhub-pull-spinner").hide(),i="<p>Failed to retrieve FlowHub catalogue.</p><p>Check browser console for more details.</p>",console.warn("Error loading https://api.flowhub.org/v1/flows:",e),RED.notify(i,{type:"error",id:"FlowHubPull",timeout:4e3}))})}function obtainConfigNode(){let o=[];return RED.nodes.eachConfig(function(e){"FlowHubCfg"===e.type&&o.push(e)}),o[0]}function tokenToUrl(e){e=e.substring(4);var o="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_".split("");let t=Object.fromEntries(o.map((e,o)=>[e,o])),i=Object.fromEntries(o.map((e,o)=>[o,e]));return e.replaceAll(/./gi,(e,o)=>i[(t[e]+o+1)%64])}function obtainFhbToken(e,i){$.ajax({url:"FlowHubToken",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({cfgnode:e}),success:function(e){i(e.token)},error:function(e,o,t){i("")}})}function doFlowImportForSidebar(i,e){var o=$("#node-input-flowhubpull-flowid").val().trim();""==$("#node-input-flowhubpull-flowrevision").val().trim()&&RED.nodes.workspace(o)?(RED.notify("Remove existing flow tab to re-import",{type:"warning"}),RED.view.reveal(o)):(RED.notify("Pull triggered",{type:"warning",timeout:3e3}),$.get({url:"https://api.flowhub.org/v3/flows/"+$("#node-input-flowhubpull-flowid").val().trim()+"?cb="+(new Date).getTime()+"&v="+$("#node-input-flowhubpull-flowrevision").val().trim(),headers:{"X-FHB-TOKEN":e,"User-Agent":"FlowHub.org Sidebar"}}).done((o,e)=>{try{if(!o||!o.flowdata||!Array.isArray(JSON.parse(o.flowdata)))return RED.notify("Access denied or revision not found.",{type:"error",timeout:3e3})}catch(e){return RED.notify("Access Denied, parse error.",{type:"error",timeout:3e3})}var t;RED.nodes.workspace(o.flowid)||((t=ensureYourConfigNodeExists()).flowrevisions||={},t.flowrevisions[o.flowid]!=o.revision&&(t.flowrevisions[o.flowid]=o.revision)),RED.clipboard.import(),setTimeout(()=>{var e=JSON.parse(o.flowdata);i&&(e=e.filter(function(e){return"tab"!=e.type})),$("#red-ui-clipboard-dialog-import-text").val(JSON.stringify(e)).trigger("paste")},300)}).fail(e=>{var o="<p>Failed to retrieve flow data from FlowHub, request blocked.</p><p>Request: https://api.flowhub.org/v3/flows/"+$("#node-input-flowhubpull-flowid").val().trim()+"</p><p>AdBlocker or uBlock might have prevented request.</p><p>Please check browser console for more details.</p>";RED.notify(o,{type:"error",id:"FlowHubPull",timeout:4e3})}))}function doFlowImportForPullNode(e,o){RED.notify("Pull triggered",{type:"warning",timeout:3e3});$.get({url:"https://api.flowhub.org/v3/flows/"+$("#node-input-flowid").val().trim()+"?cb="+(new Date).getTime()+"&v="+$("#node-input-flowrevision").val().trim(),headers:{"X-FHB-TOKEN":o,"User-Agent":"FlowHub.org Pull Node"}}).done((o,e)=>{try{if(!o||!o.flowdata||!Array.isArray(JSON.parse(o.flowdata)))return RED.notify("Access denied or revision not found.",{type:"error",timeout:3e3})}catch(e){return RED.notify("Access Denied, parse error.",{type:"error",timeout:3e3})}var t;RED.nodes.workspace(o.flowid)||(t=(()=>{let o=void 0;return RED.nodes.eachConfig(function(e){"FlowHubCfg"===e.type&&(o=e)}),o})())&&(t.flowrevisions||={},t.flowrevisions[o.flowid]!=o.revision)&&(t.flowrevisions[o.flowid]=o.revision),RED.clipboard.import(),setTimeout(()=>{var e=JSON.parse(o.flowdata);$("#red-ui-clipboard-dialog-import-text").val(JSON.stringify(e)).trigger("paste")},300)}).fail(e=>{var o="<p>Failed to retrieve flow data from FlowHub, request blocked.</p><p>Request: https://api.flowhub.org/v3/flows/"+$("#node-input-flowhubpull-flowid").val().trim()+"</p><p>AdBlocker or uBlock might have prevented request.</p><p>Please check browser console for more details.</p>";RED.notify(o,{type:"error",id:"FlowHubPull",timeout:4e3})})}function checkForDuplication(e){$.get({url:"https://api.flowhub.org/v1/flows/"+$("#node-input-flowhubpull-flowid").val()+"?cb="+(new Date).getTime()+"&v="+$("#node-input-flowhubpull-flowrevision").val(),headers:{"X-FHB-TOKEN":e}},function(e,o){let t=[];if(!Array.isArray(e))return RED.notify("Access denied or revision not found.","error");if(e.forEach((e,o)=>{"tab"==e.type?RED.nodes.workspace(e.id)&&t.push(e):"junction"==e.type?RED.nodes.junction(e.id)&&t.push(e):"group"==e.type?RED.nodes.group(e.id)&&t.push(e):"subflow"==e.type?RED.nodes.subflow(e.id)&&t.push(e):RED.nodes.node(e.id)&&t.push(e)}),0==t.length){RED.notify("Found no duplication.","success");try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){}}else{RED.notify("Found "+t.length+" items of duplication","warning");try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){$("#node-input-flowhubpull-sb-duplication-container-div").css({width:"100%",height:"calc(100%)"}).treeList({multi:!1}).on("treelistitemmouseover",function(e,o){}).on("treelistitemmouseout",function(e,o){}).on("treelistselect",function(e,o){o.node&&(RED.workspaces.show(o.node.z,!1,!1,!0),RED.view.reveal(o.node.id,!0),RED.view.redraw())}).on("treelistconfirm",function(e,o){var t;o.node&&(t=o.node.id,setTimeout(()=>{var e=RED.nodes.node(t);e&&(RED.view.reveal(e.id),RED.view.select(e.id),RED.editor.edit(e)),t==RED.workspaces.active()&&RED.workspaces.edit()},50))})}t=t.map(e=>({node:e,label:e.id,sublabel:e.type,selected:!1,checkbox:!1})),$("#node-input-flowhubpull-sb-duplication-container-div").treeList("data",t)}})}
-
+   
    // Add your plugin as a new tabsheet in the right sidebar AFTER the flow editor is completely started
-   var initialiseConfigNodeOnce = () => {
-      RED.events.off('runtime-state', initialiseConfigNodeOnce);
+var initSidebarComparePullPush = () => {
+    // The html content of the sidebar has been specified below as a data-template, from where it can be loaded:
+    var content = $($('script[type="text/x-red"][data-template-name="FlowHubDiff"]').i18n().html());
 
-      // The html content of the sidebar has been specified below as a data-template, from where it can be loaded:
-      var content = $($('script[type="text/x-red"][data-template-name="FlowHubDiff"]').i18n().html());
-    
-      // Add a "Your sidebar" tabsheet to the right sidebar panel, in which this sidebar panel can be displayed
-      // --> more details: https://nodered.org/docs/api/ui/sidebar/
-      RED.sidebar.addTab({
-         id: "FlowHubDiff",
-         label: "FlowHub", // short name for the tab
-         name: "FlowHub.org", // long name for the menu
-         content: content,
-         enableOnEdit: true,
-         iconClass: "fa fa-window-minimize",
-         visible: true
-      });
-      
-      let cfgNode = ensureYourConfigNodeExists();
+    // Add a "Your sidebar" tabsheet to the right sidebar panel, in which this sidebar panel can be displayed
+    // --> more details: https://nodered.org/docs/api/ui/sidebar/
+    RED.sidebar.addTab({
+        id: "FlowHubDiff",
+        label: "FlowHub", // short name for the tab
+        name: "FlowHub.org", // long name for the menu
+        content: content,
+        enableOnEdit: true,
+        iconClass: "fa fa-window-minimize",
+        visible: true
+    });
 
-      /* for older config nodes, add new parameters */
-      if ( cfgNode.forcepush == undefined) {
-        cfgNode.forcepush = false
-        RED.nodes.dirty(true)
-      }
-      if ( cfgNode.pushnewflows == undefined) {
-        cfgNode.pushnewflows = false
-        RED.nodes.dirty(true)
-      }
-      
-      if ( cfgNode.flowrevisions == undefined ) {
-        cfgNode.flowrevisions = {}
-        RED.nodes.dirty(true)
-      }
+    var tabs = RED.tabs.create({
+        id: 'func-flowhub-tabs',
+        onchange: function (tab) {
+            $('#func-flowhub-tabs-content').children().hide();
+            $('#' + tab.id).show();
+        }
+    });
 
-      var tabs = RED.tabs.create({
-            id: 'func-flowhub-tabs',
-            onchange: function(tab) {
-               $('#func-flowhub-tabs-content').children().hide();
-               $('#' + tab.id).show();
-            }
-      });
-      
-      // Add pull tab
-      tabs.addTab({
-            id: 'func-flowhub-tab-pull',
-            iconClass: 'fa fa-arrow-down',
-            label: 'Pull'
-      });
+    // Add pull tab
+    tabs.addTab({
+        id: 'func-flowhub-tab-pull',
+        iconClass: 'fa fa-arrow-down',
+        label: 'Pull'
+    });
 
-      // Add compare tab
-      tabs.addTab({
-            id: 'func-flowhub-tab-compare',
-            iconClass: 'fa fa-clone',
-            label: 'Compare'
-      });
-      
-      // Add push tab
-      tabs.addTab({
-            id: 'func-flowhub-tab-push',
-            iconClass: 'fa fa-arrow-up',
-            label: 'Push'
-      });
-      
-      tabs.activateTab("func-flowhub-tab-pull");
+    // Add compare tab
+    tabs.addTab({
+        id: 'func-flowhub-tab-compare',
+        iconClass: 'fa fa-clone',
+        label: 'Compare'
+    });
 
-      $('#node-input-flowhubdiff-compare-btn').on('click', (e) => {
-         e.preventDefault();
-         ensureYourConfigNodeExists();
-         doComparison( getFlowDataFromCurrentWorkspace(), globalYourConfigNode)
-      })
+    // Add push tab
+    tabs.addTab({
+        id: 'func-flowhub-tab-push',
+        iconClass: 'fa fa-arrow-up',
+        label: 'Push'
+    });
 
-      $('#node-input-flowhubdiff-next-change-btn').on('click', showNextChangeButtonPressed)
+    tabs.activateTab("func-flowhub-tab-pull");
 
-      $('#node-input-flowhubpush-push-btn').on('click', (e) => {
-         if ( e ) { e.preventDefault(); }
-         ensureYourConfigNodeExists();
+    $('#node-input-flowhubdiff-compare-btn').on('click', (e) => {
+        e.preventDefault();
+        ensureYourConfigNodeExists();
+        doComparison(getFlowDataFromCurrentWorkspace(), globalYourConfigNode)
+    })
 
-         RED.notify("Preparing Submission", {
+    $('#node-input-flowhubdiff-next-change-btn').on('click', showNextChangeButtonPressed)
+
+    $('#node-input-flowhubpush-push-btn').on('click', (e) => {
+        if (e) { e.preventDefault(); }
+        ensureYourConfigNodeExists();
+
+        RED.notify("Preparing Submission", {
             type: "warning",
             id: "FlowHubPush",
             timeout: 2000
-         });
+        });
 
-         globalYourConfigNode.pushcomment = $('#node-input-flowhubpush-comment').val();
+        globalYourConfigNode.pushcomment = $('#node-input-flowhubpush-comment').val();
 
-         svgGeneratorFunctionForVersion(RED)( (svgdata) => {
-            getInstalledNodeDetails( (nodedetails) => {
-               doPushSubmission(getFlowDataFromCurrentWorkspace(), globalYourConfigNode, svgdata, nodedetails)
+        svgGeneratorFunctionForVersion(RED)((svgdata) => {
+            getInstalledNodeDetails((nodedetails) => {
+                doPushSubmission(getFlowDataFromCurrentWorkspace(), globalYourConfigNode, svgdata, nodedetails)
             })
-         });
-      });
+        });
+    });
 
-      $.ajax({
-        url: "FlowHubTokens",
-        type: "POST",
-        contentType: "application/json; charset=utf-8",
+    $("#node-input-flowhubpush-apiToken").typedInput({
+        types: ["env", "global", "cred"],
+        typeField: "#node-input-flowhubpush-apiTokenType"
+    });
 
-        data: JSON.stringify({
-          cfgnode: globalYourConfigNode,
-        }),
+    $("#node-input-flowhubpush-apiToken").typedInput('value', "");
+    $("#node-input-flowhubpush-apiToken").typedInput('type', "cred");
 
-        success: function (resp) {
-          if ( !globalYourConfigNode.credentials) {
-            globalYourConfigNode.credentials = { apiToken: resp.apiToken, tokens: resp.tokens }
-          }
-
-          globalYourConfigNode.tokens = resp.tokens
-          globalYourConfigNode.apiToken = resp.apiToken
-          $("#node-input-flowhubpush-apiToken").typedInput( 'value', resp.apiToken);
-          
-          resp.tokens.forEach( tk => {
-             addTokenToList((tk.val == resp.apiToken ? "flowhub-token-selected" : ""), tk)
-          })
-          addEventHandlersToTokenList(globalYourConfigNode)
-        },
-
-        error: function (jqXHR, textStatus, errorThrown) {}
-      });
-
-      $("#node-input-flowhubpush-apiToken").typedInput({
-          types:["env", "global", "cred"],
-          typeField: "#node-input-flowhubpush-apiTokenType"
-      });
-
-      $("#node-input-flowhubpush-apiToken").typedInput( 'value', "");
-      $("#node-input-flowhubpush-apiToken").typedInput( 'type', "cred");
-
-      $("#node-input-flowhubpush-apiToken").on('change', () => {
+    $("#node-input-flowhubpush-apiToken").on('change', () => {
         ensureYourConfigNodeExists();
-         
+
         var val = $("#node-input-flowhubpush-apiToken").typedInput('value');
         var typ = $("#node-input-flowhubpush-apiToken").typedInput('type');
-        
-        if ( val != globalYourConfigNode.apiToken ) {
-          if (!globalYourConfigNode.credentials) { globalYourConfigNode.credentials = {}}
-          globalYourConfigNode.credentials.apiToken = val;
+
+        if (val != globalYourConfigNode.apiToken) {
+            if (!globalYourConfigNode.credentials) { globalYourConfigNode.credentials = {} }
+            globalYourConfigNode.credentials.apiToken = val;
         }
 
-        if ( typ != globalYourConfigNode.apiTokenType ) {
-          globalYourConfigNode.apiTokenType = typ;
+        if (typ != globalYourConfigNode.apiTokenType) {
+            globalYourConfigNode.apiTokenType = typ;
         }
 
         globalYourConfigNode.apiToken = val
-      })
+    })
 
-      $('#node-input-flowhubpush-comment').on('change', (e) => {
-         if ( e ) { e.preventDefault(); }
-         ensureYourConfigNodeExists();
+    $('#node-input-flowhubpush-comment').on('change', (e) => {
+        if (e) { e.preventDefault(); }
+        ensureYourConfigNodeExists();
 
-         let val = $('#node-input-flowhubpush-comment').val();
-         if ( val != globalYourConfigNode.pushcomment ) { 
+        let val = $('#node-input-flowhubpush-comment').val();
+        if (val != globalYourConfigNode.pushcomment) {
             globalYourConfigNode.pushcomment = val;
             RED.nodes.dirty(true);
-         }
-      })
-      $('#node-input-flowhubpush-comment').val(globalYourConfigNode.pushcomment)
+        }
+    })
 
-      RED.comms.subscribe('flowhub:submission-result', (event,data) => {
+    RED.comms.subscribe('flowhub:submission-result', (event, data) => {
         RED.notify("Submission status: " + data.status, {
-          type: data.statusType,
-          id: "FlowHubPushResult",
-          timeout: data.statusType == "error" ? 3000 : 2000
+            type: data.statusType,
+            id: "FlowHubPushResult",
+            timeout: data.statusType == "error" ? 3000 : 2000
         });
 
         /* update an existing revision of a flow, this happens after the 
           flow was successfully submitted and updated */
-        if ( data.flowid && data.flowrevision ) {
-          let cfgNode = ensureYourConfigNodeExists();
-          cfgNode.flowrevisions ||= {}
+        if (data.flowid && data.flowrevision) {
+            let cfgNode = ensureYourConfigNodeExists();
+            cfgNode.flowrevisions ||= {}
 
-          if ( cfgNode.flowrevisions[data.flowid] != data.flowrevision ) {
-            cfgNode.flowrevisions[data.flowid] = data.flowrevision
-            cfgNode.pushcomment = ""
-            $('#node-input-flowhubpush-comment').val(cfgNode.pushcomment)
-            RED.nodes.dirty(true)
-          }
+            if (cfgNode.flowrevisions[data.flowid] != data.flowrevision) {
+                cfgNode.flowrevisions[data.flowid] = data.flowrevision
+                cfgNode.pushcomment = ""
+                $('#node-input-flowhubpush-comment').val(cfgNode.pushcomment)
+                RED.nodes.dirty(true)
+            }
         }
-      });
+    });
 
-      if ( globalYourConfigNode.notab ) {
-         $('#flowhubpull-dialog-import-opt-sb-current').addClass('selected')
-         $('#flowhubpull-dialog-import-opt-sb-new').removeClass('selected')
-        } else {
-         $('#flowhubpull-dialog-import-opt-sb-new').addClass('selected')
-         $('#flowhubpull-dialog-import-opt-sb-current').removeClass('selected')
-       }
-       
-       $('#flowhubpull-dialog-import-opt-sb-current').on('click', (e) => {
-         e.preventDefault();
+    $('#flowhubpull-dialog-import-opt-sb-current').on('click', (e) => {
+        e.preventDefault();
 
-         ensureYourConfigNodeExists();
-         globalYourConfigNode.notab = true
-         RED.nodes.dirty(true);
+        ensureYourConfigNodeExists();
+        globalYourConfigNode.notab = true
+        RED.nodes.dirty(true);
 
-         $('#flowhubpull-dialog-import-opt-sb-new').removeClass('selected')
-         $('#flowhubpull-dialog-import-opt-sb-current').addClass('selected')
-       })
+        $('#flowhubpull-dialog-import-opt-sb-new').removeClass('selected')
+        $('#flowhubpull-dialog-import-opt-sb-current').addClass('selected')
+    })
 
-       $('#flowhubpull-dialog-import-opt-sb-new').on('click', (e) => {
-         e.preventDefault();
+    $('#flowhubpull-dialog-import-opt-sb-new').on('click', (e) => {
+        e.preventDefault();
 
-         ensureYourConfigNodeExists();
-         globalYourConfigNode.notab = false;
-         RED.nodes.dirty(true);
+        ensureYourConfigNodeExists();
+        globalYourConfigNode.notab = false;
+        RED.nodes.dirty(true);
 
-         $('#flowhubpull-dialog-import-opt-sb-current').removeClass('selected')
-         $('#flowhubpull-dialog-import-opt-sb-new').addClass('selected')
-       })
+        $('#flowhubpull-dialog-import-opt-sb-current').removeClass('selected')
+        $('#flowhubpull-dialog-import-opt-sb-new').addClass('selected')
+    })
 
-      var dirList = $("#node-input-flowhubpull-sb-target-container-div").css({
+    var dirList = $("#node-input-flowhubpull-sb-target-container-div").css({
         width: "100%",
         height: "100%"
-       }).treeList(
-         {
-           multi:false
-         }
-       ).on('treelistselect', function(event, item) {
-         if ( item.flowid ) {
-           $('#node-input-flowhubpull-flowid').val(item.flowid);
+    }).treeList(
+        {
+            multi: false
+        }
+    ).on('treelistselect', function (event, item) {
+        if (item.flowid) {
+            $('#node-input-flowhubpull-flowid').val(item.flowid);
 
-           ensureYourConfigNodeExists();
-           globalYourConfigNode.flowid = item.flowid;
+            ensureYourConfigNodeExists();
+            globalYourConfigNode.flowid = item.flowid;
 
-           obtainFhbToken(globalYourConfigNode, (token) => {
-              if ( token !== "" && token ) {
-                token = "?t=" + tokenToUrl(token)
-              }
-              $('#flowhubpull-sb-view-flow-link').attr(
-                'href', 'https://flowhub.org/f/' + item.flowid + token
-              ).show();              
-           })
-           
-           $('#node-input-flowhubpull-sb-import-flow-but').prop('disabled',false)
-         }
-       }).on('treelistconfirm', function(event, item) {
-         if ( item.flowid ) {
-           $('#node-input-flowhubpull-flowid').val(item.flowid);
+            obtainFhbToken(globalYourConfigNode, (token) => {
+                if (token !== "" && token) {
+                    token = "?t=" + tokenToUrl(token)
+                }
+                $('#flowhubpull-sb-view-flow-link').attr(
+                    'href', 'https://flowhub.org/f/' + item.flowid + token
+                ).show();
+            })
 
-           ensureYourConfigNodeExists();
-           globalYourConfigNode.flowid = item.flowid;
+            $('#node-input-flowhubpull-sb-import-flow-but').prop('disabled', false)
+        }
+    }).on('treelistconfirm', function (event, item) {
+        if (item.flowid) {
+            $('#node-input-flowhubpull-flowid').val(item.flowid);
 
-           obtainFhbToken(globalYourConfigNode, (token) => {
-              if ( token !== "" && token ) {
-                token = "?t=" + tokenToUrl(token)
-              }
+            ensureYourConfigNodeExists();
+            globalYourConfigNode.flowid = item.flowid;
 
-              $('#flowhubpull-sb-view-flow-link').attr(
-                'href', 'https://flowhub.org/f/' + item.flowid + token
-              ).show();
-           })
+            obtainFhbToken(globalYourConfigNode, (token) => {
+                if (token !== "" && token) {
+                    token = "?t=" + tokenToUrl(token)
+                }
 
-           $('#node-input-flowhubpull-sb-import-flow-but').prop('disabled',false)
-           $("#node-input-flowhubpull-sb-import-flow-but").trigger('click');
-         }
-       });
+                $('#flowhubpull-sb-view-flow-link').attr(
+                    'href', 'https://flowhub.org/f/' + item.flowid + token
+                ).show();
+            })
 
-       if ( globalYourConfigNode.flowrevision != "" ) {
-         $('#node-input-flowhubpull-flowrevision').val(globalYourConfigNode.flowrevision)
-       }
+            $('#node-input-flowhubpull-sb-import-flow-but').prop('disabled', false)
+            $("#node-input-flowhubpull-sb-import-flow-but").trigger('click');
+        }
+    });
 
-       if ( globalYourConfigNode.flowid ) {
-         $('#node-input-flowhubpull-flowid').val(globalYourConfigNode.flowid);
+    var search = $("#node-input-flowhubpull-sb-target-filter").searchBox({
+        style: "compact",
+        delay: 300,
+        change: function () {
+            var val = $(this).val().trim().toLowerCase();
+            if (val === "") {
+                dirList.treeList("filter", null);
+                search.searchBox("count", "");
+            } else {
+                var count = dirList.treeList("filter", function (item) {
+                    return item.label.toLowerCase().indexOf(val) > -1 || item.sublabel.toLowerCase().indexOf(val) > -1
+                });
+                search.searchBox("count", count + " / " + dirList.treeList("data").length);
+            }
+        }
+    });
 
-         obtainFhbToken(globalYourConfigNode, (token) => {
-          if ( token !== "" && token ) {
-            token = "?t=" + tokenToUrl(token)
-          }
-          $('#flowhubpull-sb-view-flow-link').attr(
-              'href', 'https://flowhub.org/f/' + globalYourConfigNode.flowid + token
-          ).show();
-         })
-       } else {
-        $('#node-input-flowhubpull-sb-import-flow-but').prop('disabled',true)
-       }
-
-       obtainFhbToken(globalYourConfigNode, (token) => {
-           flowHubPullUpdateFlows( (lst) => { dirList.treeList('data', lst) }, token);
-       })
-
-       var search = $("#node-input-flowhubpull-sb-target-filter").searchBox({
-         style: "compact",
-         delay: 300,
-         change: function() {
-           var val = $(this).val().trim().toLowerCase();
-           if (val === "") {
-             dirList.treeList("filter", null);
-             search.searchBox("count","");
-           } else {
-             var count = dirList.treeList("filter", function(item) {
-               return item.label.toLowerCase().indexOf(val) > -1 || item.sublabel.toLowerCase().indexOf(val) > -1
-             });
-             search.searchBox("count",count + " / " + dirList.treeList("data").length);
-           }
-         }
-       });
-
-       $('#node-input-flowhubpull-sb-refresh-list-but').on('click', function(e) {
+    $('#node-input-flowhubpull-sb-refresh-list-but').on('click', function (e) {
         e.preventDefault();
         $('#func-sidebar-flowhub-pull-spinner').show()
-        
-        setTimeout( () => {
-          ensureYourConfigNodeExists();
 
-          obtainFhbToken(globalYourConfigNode, (token) => {
-            flowHubPullUpdateFlows( (lst) => { 
-              dirList.treeList('empty') 
-              $('#flowhubpull-sb-view-flow-link').hide()
-              setTimeout( () => {
-                dirList.treeList('data', lst) 
-              },300)
-            }, token);
-          })
+        setTimeout(() => {
+            ensureYourConfigNodeExists();
+
+            obtainFhbToken(globalYourConfigNode, (token) => {
+                flowHubPullUpdateFlows((lst) => {
+                    dirList.treeList('empty')
+                    $('#flowhubpull-sb-view-flow-link').hide()
+                    setTimeout(() => {
+                        dirList.treeList('data', lst)
+                    }, 300)
+                }, token);
+            })
         }, 300);
-       });
+    });
 
-      $('#node-input-flowhubpush-new-token-field').on('change', e => {
+    $('#node-input-flowhubpush-new-token-field').on('change', e => {
         if ($('#node-input-flowhubpush-new-token-field').val()) {
-          checkToken($('#node-input-flowhubpush-new-token-field').val())
+            checkToken($('#node-input-flowhubpush-new-token-field').val())
         } else {
-          $('#flowhubpush-check-token-result-content').fadeOut(300)
+            $('#flowhubpush-check-token-result-content').fadeOut(300)
         }
-      })
+    })
 
-      $('#node-input-flowhubpush-clear-token-btn').on('click', e => {
-        if ( e ) { e.preventDefault() }      
+    $('#node-input-flowhubpush-clear-token-btn').on('click', e => {
+        if (e) { e.preventDefault() }
         $('#node-input-flowhubpush-new-token-name-field').val("")
         $('#node-input-flowhubpush-new-token-field').val("")
         $('#node-input-flowhubpush-new-token-field').trigger('change')
-      })
-      
-      $('#node-input-flowhubpush-add-token-btn').on('click', e => {
-        if ( e ) { e.preventDefault() }
+    })
+
+    $('#node-input-flowhubpush-add-token-btn').on('click', e => {
+        if (e) { e.preventDefault() }
 
         ensureYourConfigNodeExists();
 
-        if ( !globalYourConfigNode.tokens ) {
-          globalYourConfigNode.tokens = []
+        if (!globalYourConfigNode.tokens) {
+            globalYourConfigNode.tokens = []
         }
 
         let tk = {
-          name: $('#node-input-flowhubpush-new-token-name-field').val() || "",
-          type: "cred",
-          val: $('#node-input-flowhubpush-new-token-field').val() || "empty"
+            name: $('#node-input-flowhubpush-new-token-name-field').val() || "",
+            type: "cred",
+            val: $('#node-input-flowhubpush-new-token-field').val() || "empty"
         }
 
         if (tk.name == "") {
-          return RED.notify(RED._("notification.warning", {
-            message: "Token name empty, doing nothing."
-          }), "warning");          
+            return RED.notify(RED._("notification.warning", {
+                message: "Token name empty, doing nothing."
+            }), "warning");
         }
-        
+
         globalYourConfigNode.tokens.push(tk)
         if (!globalYourConfigNode.credentials) {
-          globalYourConfigNode.credentials = { tokens: globalYourConfigNode.tokens }
+            globalYourConfigNode.credentials = { tokens: globalYourConfigNode.tokens }
         } else {
-          globalYourConfigNode.credentials.tokens = globalYourConfigNode.tokens
+            globalYourConfigNode.credentials.tokens = globalYourConfigNode.tokens
         }
         RED.nodes.dirty(true);
 
-        addTokenToList("",tk)
+        addTokenToList("", tk)
         addEventHandlersToTokenList(globalYourConfigNode)
-      })
+    })
 
-      $("#node-input-flowhubpull-sb-check-duplicates-flow-but").on("click", function(e) {
-        if ( e ) { e.preventDefault(); }
+    $("#node-input-flowhubpull-sb-check-duplicates-flow-but").on("click", function (e) {
+        if (e) { e.preventDefault(); }
 
-        if ( $('#node-input-flowhubpull-flowid').val().trim() == "" ||
-            !$('#node-input-flowhubpull-flowid').val() ) {
-          return RED.notify(RED._("notification.warning", {
-            message: "FlowID not provided, doing nothing."
-          }), "warning");
+        if ($('#node-input-flowhubpull-flowid').val().trim() == "" ||
+            !$('#node-input-flowhubpull-flowid').val()) {
+            return RED.notify(RED._("notification.warning", {
+                message: "FlowID not provided, doing nothing."
+            }), "warning");
         }
 
         RED.notify("Checking for flow duplication.", "success");
@@ -457,64 +379,147 @@
         ensureYourConfigNodeExists();
 
         obtainFhbToken(globalYourConfigNode, (token) => {
-          checkForDuplication(token)
+            checkForDuplication(token)
         })
-      })
+    })
 
-      $("#node-input-flowhubpull-sb-import-flow-but").on("click", function(e) {
-        if ( e ) { e.preventDefault(); }
+    $("#node-input-flowhubpull-sb-import-flow-but").on("click", function (e) {
+        if (e) { e.preventDefault(); }
 
-        if ( $('#node-input-flowhubpull-flowid').val().trim() == "" ||
-            !$('#node-input-flowhubpull-flowid').val() ) {
-          return RED.notify(RED._("notification.warning", {
-            message: "FlowID not provided, doing nothing."
-          }), "warning");
+        if ($('#node-input-flowhubpull-flowid').val().trim() == "" ||
+            !$('#node-input-flowhubpull-flowid').val()) {
+            return RED.notify(RED._("notification.warning", {
+                message: "FlowID not provided, doing nothing."
+            }), "warning");
         }
 
         ensureYourConfigNodeExists();
         var notab = globalYourConfigNode.notab;
 
         obtainFhbToken(globalYourConfigNode, (token) => {
-          doFlowImportForSidebar(notab, token)
+            doFlowImportForSidebar(notab, token)
         })
-      });
+    });
 
-      $('#node-input-flowhubpush-pushnewflows').prop('checked', globalYourConfigNode.pushnewflows)
-
-      $('#node-input-flowhubpush-pushnewflows').on('change', () => {
+    $('#node-input-flowhubpush-pushnewflows').on('change', () => {
         ensureYourConfigNodeExists();
         globalYourConfigNode.pushnewflows = $('#node-input-flowhubpush-pushnewflows').is(":checked")
         RED.nodes.dirty(true);
-      })
+    })
 
-      $('#node-input-flowhubpush-forcepush').prop('checked', globalYourConfigNode.forcepush)
-
-      $('#node-input-flowhubpush-forcepush').on('change', () => {
+    $('#node-input-flowhubpush-forcepush').on('change', () => {
         ensureYourConfigNodeExists();
         globalYourConfigNode.forcepush = $('#node-input-flowhubpush-forcepush').is(":checked")
         RED.nodes.dirty(true);
-      })
+    })
 
-      $('#node-input-flowhubpull-flowrevision').on('change', () => {
+    $('#node-input-flowhubpull-flowrevision').on('change', () => {
         ensureYourConfigNodeExists();
         let val = $('#node-input-flowhubpull-flowrevision').val();
-        
-        if (globalYourConfigNode.flowrevision != val ) {
-          globalYourConfigNode.flowrevision = val
-          RED.nodes.dirty(true);
+
+        if (globalYourConfigNode.flowrevision != val) {
+            globalYourConfigNode.flowrevision = val
+            RED.nodes.dirty(true);
         }
-      })
+    })
 
     RED.panels.create({
         id: 'func-flowhub-tab-compare',
-        resize: (topSze,botSze) => {
-          $('#node-input-flowhubdiff-target-container-div').parent().css('height', `calc( ${topSze}px - 32vh)`)
-          $('#node-input-flowhubdiff-diffcontainer').parent().parent().css('height', botSze)
+        resize: (topSze, botSze) => {
+            $('#node-input-flowhubdiff-target-container-div').parent().css('height', `calc( ${topSze}px - 32vh)`)
+            $('#node-input-flowhubdiff-diffcontainer').parent().parent().css('height', botSze)
         }
     })
-   };
-   
-   RED.events.on('runtime-state', initialiseConfigNodeOnce);
+
+    // The above is done before the nodes are initialised, the following is done after
+    // the sidebar has been initialised and the config nodes are available.
+    let fillSidebarForms = () => {
+        RED.events.off('flows:loaded', fillSidebarForms);
+
+        let cfgNode = ensureYourConfigNodeExists();
+
+        /* for older config nodes, add new parameters */
+        if (cfgNode.forcepush == undefined) {
+            cfgNode.forcepush = false
+            RED.nodes.dirty(true)
+        }
+        if (cfgNode.pushnewflows == undefined) {
+            cfgNode.pushnewflows = false
+            RED.nodes.dirty(true)
+        }
+
+        if (cfgNode.flowrevisions == undefined) {
+            cfgNode.flowrevisions = {}
+            RED.nodes.dirty(true)
+        }
+
+        $.ajax({
+            url: "FlowHubTokens",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+
+            data: JSON.stringify({
+                cfgnode: globalYourConfigNode,
+            }),
+
+            success: function (resp) {
+                if (!globalYourConfigNode.credentials) {
+                    globalYourConfigNode.credentials = { apiToken: resp.apiToken, tokens: resp.tokens }
+                }
+
+                globalYourConfigNode.tokens = resp.tokens
+                globalYourConfigNode.apiToken = resp.apiToken
+                $("#node-input-flowhubpush-apiToken").typedInput('value', resp.apiToken);
+
+                resp.tokens.forEach(tk => {
+                    addTokenToList((tk.val == resp.apiToken ? "flowhub-token-selected" : ""), tk)
+                })
+                addEventHandlersToTokenList(globalYourConfigNode)
+            },
+
+            error: function (jqXHR, textStatus, errorThrown) { }
+        });
+
+        $('#node-input-flowhubpush-pushnewflows').prop('checked', globalYourConfigNode.pushnewflows)
+        $('#node-input-flowhubpush-comment').val(globalYourConfigNode.pushcomment)
+        $('#node-input-flowhubpush-forcepush').prop('checked', globalYourConfigNode.forcepush)
+
+        if (globalYourConfigNode.notab) {
+            $('#flowhubpull-dialog-import-opt-sb-current').addClass('selected')
+            $('#flowhubpull-dialog-import-opt-sb-new').removeClass('selected')
+        } else {
+            $('#flowhubpull-dialog-import-opt-sb-new').addClass('selected')
+            $('#flowhubpull-dialog-import-opt-sb-current').removeClass('selected')
+        }
+
+        if (globalYourConfigNode.flowrevision != "") {
+            $('#node-input-flowhubpull-flowrevision').val(globalYourConfigNode.flowrevision)
+        }
+
+        if (globalYourConfigNode.flowid) {
+            $('#node-input-flowhubpull-flowid').val(globalYourConfigNode.flowid);
+
+            obtainFhbToken(globalYourConfigNode, (token) => {
+                if (token !== "" && token) {
+                    token = "?t=" + tokenToUrl(token)
+                }
+                $('#flowhubpull-sb-view-flow-link').attr(
+                    'href', 'https://flowhub.org/f/' + globalYourConfigNode.flowid + token
+                ).show();
+            })
+        } else {
+            $('#node-input-flowhubpull-sb-import-flow-but').prop('disabled', true)
+        }
+
+        obtainFhbToken(globalYourConfigNode, (token) => {
+            flowHubPullUpdateFlows((lst) => { dirList.treeList('data', lst) }, token);
+        })
+    }
+    RED.events.on('flows:loaded', fillSidebarForms);
+};
+
+RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarComparePullPush });
+
 })();
 </script>
 
