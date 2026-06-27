@@ -512,6 +512,7 @@ var initSidebarComparePullPush = () => {
         }
 
         obtainFhbToken(globalYourConfigNode, (token) => {
+            $('#func-sidebar-flowhub-pull-spinner').show()
             flowHubPullUpdateFlows((lst) => { dirList.treeList('data', lst) }, token);
         })
     }
