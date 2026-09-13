@@ -63,10 +63,6 @@ All flows found here are licensed under the [don't do evil license](https://cdn.
 
 **Usage of FlowHub.org implies adherence to that license.**.
 
-The Enforcement of said license is near impossible, since Evil is hard to identify.
-
-What does "implies" mean versus strict adherence. Do whatever you like just keep in mind, evilness does pay.
-
 ## Artifacts
 
 - [NPMjs Package](https://www.npmjs.com/package/@gregoriusrippenstein/node-red-contrib-flowhub)
