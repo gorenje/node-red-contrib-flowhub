@@ -4,18 +4,29 @@ module.exports = function (RED) {
 
     var node = this;
     var cfg = config;
+    
+    let hostForToken = (token) => {
+      if (token && token.startsWith("local://")) {
+        return token.replace(/local:\/\//,"").split("?")[0]
+      } else {
+        return "https://api.flowhub.org"
+      }
+    }
 
     let obtainFlow = (msg,token) => {
       if (cfg.flowid || msg.flowid) {
         import('got').then((module) => {
           module.got.get(
-            "https://api.flowhub.org/v2/flows/" + (cfg.flowid || msg.flowid).trim() + 
+            `${hostForToken(token)}/v3/flows/` + (cfg.flowid || msg.flowid).trim() +
             "?cb=" + new Date().getTime() + "&v=" + (cfg.flowrevision || msg.flowrevision || "").trim(),
-          {
+            {
               headers: {
                 "FlowHub-API-Version": "brownbear",
                 "X-FHB-TOKEN": token,
                 "User-Agent": "FlowHub.org Pull Node Msg"
+              },
+              https: {
+                rejectUnauthorized: false
               },
               timeout: {
                 request: 25000,
@@ -25,39 +36,22 @@ module.exports = function (RED) {
 
               try {
                 var payload = JSON.parse(resp.body)
-
-                if (!Array.isArray(payload)) {
+                
+                if (!payload.flowdata || !payload.nodedetails) {
                   node.status({ fill: "red", shape: "dot", text: "access denied" });
                   return node.error("access denied")
                 }
 
-                /* ***** option removed from the frontend, ignore it's value.
-                if (cfg.notab) {
-                  payload = payload.filter((nde) => {
-                    return nde.type != "tab";
-                  })
-                }
-                */
-
-                /* collect the package details */
-                let nodedetails = "[]"
-                payload = payload.filter( nde => {
-                  if ( nde.type == "__nodedetails__") {
-                    nodedetails = nde.content
-                    return false
-                  } else {
-                    return true
-                  }                
-                })
-
                 node.send([
                   {
                     ...msg,
-                    payload: JSON.parse(nodedetails)
+                    payload: JSON.parse(payload.nodedetails),
+                    topic: "packages"
                   },
                   {
                    ...msg,
-                    payload: payload
+                    payload: JSON.parse(payload.flowdata),
+                    topic: "flowjson"
                   }
                 ]);
 
@@ -92,15 +86,15 @@ module.exports = function (RED) {
           cfgNodes.push(nde)
         }
       })
-      
+            
       if ( cfgNodes.length > 0 ) {
-        RED.util.evaluateNodeProperty(cfgNodes[0].apiToken, cfgNodes[0].apiTokenType, node, msg, (err, result) => {
-          if ( !err ) {
-            obtainFlow(msg, result)
-          } else {
-            obtainFlow(msg, "")
-          }
-        })
+        let creds = RED.nodes.getCredentials(cfgNodes[0].id)
+        if (creds && creds.apiToken) {
+          obtainFlow(msg, creds.apiToken)
+        } else {
+          obtainFlow(msg, "")
+
+        }
       } else {
         obtainFlow(msg,"")
       }

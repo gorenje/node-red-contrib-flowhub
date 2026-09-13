@@ -4,7 +4,7 @@
 (function() {
    var globalYourConfigNode = null;
       
-   function escapeHtml(e){return String(e).replace(/[&<>"'`=\/]/g,function(e){return entityMap[e]})}function zoomToNodeOrJunction(e){var t=$("#red-ui-workspace-chart"),o=RED.view.scale(),n=[(t[0].clientWidth-$("#red-ui-sidebar").width())/o,t[0].clientHeight/o],i=[t.scrollLeft()/o,t.scrollTop()/o],a=e.x,e=e.y;(a<i[0]||e<i[1]||n[0]+i[0]<a||n[1]+i[1]<e)&&t.animate({scrollLeft:"-="+(i[0]-a+n[0]/2)*o,scrollTop:"-="+(i[1]-e+n[1]/2)*o},200)}function checkToken(e){$("#flowhubpush-check-token-result-content").fadeOut(300,()=>{$.get({url:"https://flowhub.org/integration/token/check?format=json&t="+e}).done(e=>{if(!e.data)return RED.notify("Check failed: "+e.msg,{type:"error",id:"FlowHubTokenCheck",timeout:2e3});RED.notify("FlowHub token is good!",{type:"success",id:"FlowHubTokenCheck",timeout:2e3}),$("#flowhubpush-check-token-result-content").find(".user").attr("href","mailto:"+e.data.email).html(e.data.name),$("#flowhubpush-check-token-result-content").find(".email").html(e.data.email),$("#flowhubpush-check-token-result-content").find(".repo").attr("href",e.data.repo_url).html(e.data.repo),$("#flowhubpush-check-token-result-content").find(".permission").html(e.data.permission),$("#flowhubpush-check-token-result-content").find(".branch").html(e.data.branch),$("#flowhubpush-check-token-result-content").fadeIn(300)}).fail(e=>{RED.notify("Check failed: "+e.msg,{type:"error",id:"FlowHubTokenCheck",timeout:2e3})})})}var entityMap={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;","/":"&#x2F;","`":"&#x60;","=":"&#x3D;"},descMap={z:"Flow Tab Id",g:"Group Id",d:"Disabled"},linkNodeIds=["wires","links","nodes"],setOldToNewForNode=(e,t,o)=>{e[t]=o,e.dirty=!0,RED.nodes.dirty(!0),RED.view.redraw()},defaultRevertHandler=(e,t,o)=>{e=RED.nodes.node(e)||RED.nodes.junction(e);e&&setOldToNewForNode(e,t,o)},revertableAttributes={},revertableAttributesNames=(["x","y","template","name","info","func","label","tooltip","timeout","repeat"].forEach(function(e){revertableAttributes[e]=defaultRevertHandler}),Object.keys(revertableAttributes));function attrDesc(e){return descMap[e]?" <i style='font-size: 80%;'>("+descMap[e]+")</i>":""}function clickBaitDiff(){$("th.revertable").on("click",e=>{e.preventDefault();var t,o=$($(e.target).parent()).data("attr");confirm('Really revert changes to attribute "'+o+'"?')&&(t=revertableAttributes[o])&&t($($(e.target).parent()).data("id"),o,JSON.parse(atob($($(e.target).parent()).data("oldval"))))})}function createDiff(r,s){var c=[],f=[];try{if(Object.keys(s).forEach(function(e){var t;Object.keys(r).indexOf(e)<0&&(t="object"==typeof s[e]?JSON.stringify(s[e]):s[e],c.push("<tr class='dv-removed'><th>"+e+attrDesc(e)+"</th><td><i>MISSING</i></td><td><code>"+escapeHtml(t)+"</code></td></tr>"),f.push(e))}),Object.keys(r).forEach(function(e){var t;Object.keys(s).indexOf(e)<0&&(t="object"==typeof r[e]?JSON.stringify(r[e]):r[e],c.push("<tr class='dv-added'><th>"+e+attrDesc(e)+"</th><td><code>"+escapeHtml(t)+"</code></td><td><i>ADDED</i></td></tr>"),f.push(e))}),Object.keys(r).forEach(function(a){if(-1<Object.keys(s).indexOf(a))if(JSON.stringify(r[a])!==JSON.stringify(s[a]))try{let n=null,t=void 0;f.push(a);try{t=Diff.diffLines(s[a],r[a])}catch(e){t=Diff.diffLines(JSON.stringify(s[a],void 0,1),JSON.stringify(r[a],void 0,1))}let i=document.createDocumentFragment();t.forEach(e=>{let o=e.added?"green":e.removed?"red":"#040506";(n=document.createElement("pre")).setAttribute("class",e.added||e.removed?"dv-pre-elem":"dv-pre-elem-no-change"),n.style.color=o,-1<linkNodeIds.indexOf(a)&&e.value.match(/[0-9a-f]{16}/)?e.value.split(/([0-9a-fA-F]{16})/).forEach(e=>{var t;e.match(/[0-9a-fA-F]{16}/)?((t=document.createElement("a")).appendChild(document.createTextNode(e)),t.title="search for "+e,t.href="#",t.setAttribute("onclick",`javascript:RED.search.show('${e}'); return false`),t.style.color=o,n.appendChild(t)):n.appendChild(document.createTextNode(e))}):n.appendChild(document.createTextNode(e.value)),n.appendChild(document.createElement("br")),i.appendChild(n)});var o=-1<revertableAttributesNames.indexOf(a)?" revertable":"",e=document.createElement("tr");e.setAttribute("class","dv-differ"),e.setAttribute("data-id",r.id),e.setAttribute("data-attr",a);try{e.setAttribute("data-oldval",btoa(JSON.stringify(s[a])))}catch(e){o=""}var d,l=document.createElement("th");l.setAttribute("class",o),l.appendChild(document.createTextNode(a)),descMap[a]&&((d=document.createElement("i")).style["font-size"]="80%",d.appendChild(document.createTextNode("("+descMap[a]+")")),l.appendChild(d)),e.append(l),(l=document.createElement("td")).setAttribute("colspan","2"),l.append(i),e.append(l),c.push(e.outerHTML)}catch(e){console.log("--Exception",e),c.push("<tr><th class='dv-error'>"+a+" CAUSED EXCEP</th><td><code>"+escapeHtml(r[a])+"</code></td><td><code>"+escapeHtml(s[a])+"</code></td></tr>")}else c.push("<tr><th>"+a+"</th><td><code class=prop-code-value>"+escapeHtml(r[a])+"</code></td><td><code></code></td></tr>")}),0==f.length){let o=null;var e=Diff.diffJson(s,r);let n=document.createDocumentFragment();e.forEach(e=>{var t=e.added?"green":e.removed?"red":"#040506";(o=document.createElement("pre")).setAttribute("class",e.added||e.removed?"dv-pre-elem":"dv-pre-elem-no-change"),o.style.color=t,o.appendChild(document.createTextNode(e.value)),o.appendChild(document.createElement("br")),n.appendChild(o)});var t,i=document.createElement("tr"),a=(i.setAttribute("class","dv-differ"),document.createElement("th"));return a.appendChild(document.createTextNode("OBJ")),descMap.OBJ&&((t=document.createElement("i")).style["font-size"]="80%",t.appendChild(document.createTextNode("("+descMap.OBJ+")")),a.appendChild(t)),i.append(a),(a=document.createElement("td")).setAttribute("colspan","2"),a.append(n),i.append(a),{html:i.outerHTML,icon:"fa-question"}}}catch(e){console.log("Exception",e)}var o,n;return{html:c.join(""),icon:(e=f,n=[...o=["x","y","w","h","g"],"wires","d","nodes"],0==e.filter(e=>o.indexOf(e)<0).length?"fa-eye":0==e.filter(e=>n.indexOf(e)<0).length?"fa-paint-brush":"fa-pencil")}}function getInstalledNodeDetails(e){$.ajax({url:"nodes",headers:{Accept:"application/json"},success:e,error:()=>{e(["error"])}})}function doTokenCheck(e,t){$.ajax({url:"FlowHubTokenCheck",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({cfgnode:e}),success:function(e){t(e)},error:function(e,t,o){RED.notify("Check failed: "+t,{type:"error",id:"FlowHubTokenCheck",timeout:2e3})}})}function doPushSubmission(e,t,o,n){var i=RED.workspaces.active();let a=e.map(e=>e.type);n=n.filter(e=>-1<a.indexOf(e.types[0])),$.ajax({url:"FlowHubPush",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({flowid:i,flowdata:e||{},flowlabel:RED.nodes.workspace(i).label,cfgnode:t,svgdata:o,nodedetails:n}),success:function(e){RED.notify("Submission triggered",{type:"warning",id:"FlowHubPush",timeout:2e3}),obtainFhbToken(obtainConfigNode(),e=>{""!==e&&(e=e&&"?t="+tokenToUrl(e)),$("#flowhubpush-view-flow-link").attr("href","https://flowhub.org/f/"+i+e).show()})},error:function(e,t,o){RED.notify("Submission failed: "+t,{type:"error",id:"FlowHubPush",timeout:2e3}),console.log(t,o)}})}function getFlowDataFromCurrentWorkspace(e){var e=e||RED.workspaces.active(),t=RED.nodes.groups(e),e=(t=(t=t.concat(RED.nodes.junctions(e))).concat(RED.nodes.filterNodes({z:e})),RED.nodes.eachConfig(function(e){e.z===RED.workspaces.active()&&!1===e._def.hasUsers&&t.push(e)}),RED.nodes.workspace(e)||RED.nodes.subflow(e));return t.unshift(e),RED.nodes.createExportableNodeSet(t)}function iframeRemoveHighlight(){document.getElementById("flowhubdiff-svgimageiframe").contentWindow.postMessage({msg:"removehighlight"},"*")}function iframeHighlightItem(e){iframeRemoveHighlight(),document.getElementById("flowhubdiff-svgimageiframe").contentWindow.postMessage({item:{label:e.label,icon:e.icon,class:e.class,sublabel:e.sublabel,objid:e.objid},msg:"highlightitem"},"*")}function iframeHasBeenLoaded(e){let t=$(e).data("flowid");var o=getFlowDataFromCurrentWorkspace(t);setTimeout(()=>{e.contentWindow&&e.contentWindow.postMessage({nodes:o,msg:"renderlocalflow",flowid:t||RED.workspaces.active()},"*")},345)}function doComparison(e,t){var n=RED.workspaces.active();if($("#node-input-flowhubdiff-next-change-btn").hide(),RED.nodes.workspace(n))RED.notify("Flow Comparison Triggered",{type:"warning",id:"FlowHubDiff",timeout:2e3}),$.ajax({url:"FlowHubDiff",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({flowid:n,flowhub:"submission from ",flowdata:e||{},flowlabel:RED.nodes.workspace(n).label,cfgnode:t}),success:function(t){var e,d=[],l={};if("failed"==t.status){RED.notify(t.msg||"This does not seem to be a FlowHub flow id: "+n,{type:"error",timeout:2e3}),$("#flowhubdiff-view-flow-link").hide();try{$("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-svgcontainer").html(""),$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){}}else if(t.revision&&""!=t.revision&&(e=ensureYourConfigNodeExists()).flowrevisions&&e.flowrevisions[t.flowid]&&e.flowrevisions[t.flowid].substr(0,8)!=t.revision.substr(0,8)&&RED.notify(`WARNING: Revision mismatch: Local: ${e.flowrevisions[t.flowid].substr(0,8)}, Remote: `+t.revision.substr(0,8),{type:"warning",timeout:4e3}),obtainFhbToken(obtainConfigNode(),e=>{(""!==e&&e?$("#flowhubdiff-view-flow-link").attr("href","https://flowhub.org/f/"+t.flowid+"?t="+tokenToUrl(e)):$("#flowhubdiff-view-flow-link").attr("href","https://flowhub.org/f/"+t.flowid)).show()}),t.changes.forEach(function(e){var t,o,n,i,a=e.id;"deleted"==e.type?(l[a]={label:e.oldObj.name||e.oldObj.type,icon:"fa fa-trash",class:"",diffcontent:createDiff({},e.oldObj).html,sublabel:e.oldObj.type,selected:!1,checkbox:!1,children:void 0,objid:a},d.push(l[a])):"added"==e.type?(l[a]={objid:a,label:e.newObj.name||e.newObj.type,icon:"fa fa-plus-square",class:"",diffcontent:createDiff(e.newObj,{}).html,sublabel:e.newObj.type,selected:!1,checkbox:!1,children:void 0},d.push(l[a])):"tab"==e.oldObj.type||"group"==e.oldObj.type||"junction"==e.oldObj.type?(i=createDiff(e.newObj,e.oldObj),l[a]={objid:a,label:e.oldObj.name||e.oldObj.type,icon:"fa "+i.icon,class:"",diffcontent:i.html,sublabel:e.type+" - "+e.oldObj.type,selected:!1,checkbox:!1,children:void 0},d.push(l[a])):(t=RED.nodes.node(a))?((o=RED.nodes.getType(t.type))&&(n=("function"==typeof(n=o.label)?n.call(t):n)||""),o&&n||(n=t.type),i=createDiff(e.newObj,e.oldObj),l[t.id]={node:t,objid:a,label:n,icon:"fa "+i.icon,class:"",diffcontent:i.html,sublabel:e.oldObj.type,selected:!1,checkbox:!1,children:void 0},d.push(l[t.id])):console.log("Node ignore, Type: "+e.type,e)}),t.ifurl&&$("#node-input-flowhubdiff-svgcontainer").html('<iframe id="flowhubdiff-svgimageiframe" width="100%" height="100%" src="'+t.ifurl+'" onload="window.iframeHasBeenLoaded(this)" style="border: none; min-height: 300px;" data-flowid="'+n+'"></iframe>'),0==d.length){RED.notify("No Flow Changes",{type:"warning",timeout:2e3});try{$("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){}}else{try{$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){$("#node-input-flowhubdiff-target-container-div").css({width:"100%",height:"calc(100%)"}).treeList({multi:!1}).on("treelistitemmouseover",function(e,t){t.objid&&iframeHighlightItem(t)}).on("treelistitemmouseout",function(e,t){}).on("treelistselect",function(e,t){t.objid&&(RED.view.reveal(t.objid,!0),RED.view.redraw()),t.diffcontent?($("#node-input-flowhubdiff-next-change-btn").show(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",0),$("#node-input-flowhubdiff-diffcontainer").html(t.diffcontent),clickBaitDiff(),setTimeout(()=>{var e=$("#node-input-flowhubdiff-diffcontainer").find(".dv-pre-elem").length;0<e&&RED.notify("Total changes: "+e,{type:"success"})},300)):($("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-next-change-btn").hide(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",void 0))}).on("treelistconfirm",function(e,t){var o;t.objid&&(o=t.objid,setTimeout(()=>{var e;RED.nodes.node(o)?(RED.view.reveal(o),RED.view.select(o),RED.editor.edit(RED.nodes.node(o))):o==RED.workspaces.active()?RED.workspaces.edit():RED.nodes.junction(o)&&(e=RED.nodes.junction(o),$($(`g[transform="translate(${e.x},${e.y})"] rect`)[0]).addClass("red-ui-flow-junction-hovered"),$(`g[transform="translate(${e.x},${e.y})"]`).addClass("selected"),RED.view.select({nodes:[e]}),zoomToNodeOrJunction(e))},50))}),$("#node-input-flowhubdiff-target-filter").show();var o=$("#node-input-flowhubdiff-target-filter").searchBox({style:"compact",delay:300,change:function(){var e,t=$(this).val().trim().toLowerCase();""===t?($("#node-input-flowhubdiff-target-container-div").treeList("filter",null),o.searchBox("count","")):(e=$("#node-input-flowhubdiff-target-container-div").treeList("filter",function(e){return-1<e.label.toLowerCase().indexOf(t)||-1<e.node.type.toLowerCase().indexOf(t)}),o.searchBox("count",e+" / "+$("#node-input-flowhubdiff-target-container-div").treeList("data").length))}})}$("#node-input-flowhubdiff-target-container-div").treeList("data",d.sort((e,t)=>e.icon==t.icon?e.label.toLowerCase()>t.label.toLowerCase():e.icon>t.icon))}},error:function(e,t,o){$("#flowhubdiff-view-flow-link").hide();try{$("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-svgcontainer").html(""),$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){}404==e.status?RED.notify("Node has not yet been deployed, please deploy.","error"):405==e.status?RED.notify("Not Allowed.","error"):500==e.status?RED.notify("Not Allowed - 500.","error"):0==e.status?RED.notify("Not Allowed - 0.","error"):RED.notify("Not Allowed - Unexpected.","error")}});else{RED.notify("Comparing subflows not supported.",{type:"error",id:"FlowHubDiff",timeout:2e3}),$("#flowhubdiff-view-flow-link").hide();try{$("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-svgcontainer").html(""),$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){}}}function addTokenToList(e,t){$("#node-input-flowhubpush-token-list").append(`<tr class='${e}' data-type='${t.type}' data-name='${t.name}' data-token='${t.val}'>`+`<td><a class='flowhubpush-token-select-link' href='#'>${t.name}</a></td>`+"<td><a class='flowhubpush-token-select-link button' href='#'>Use</a></td><td><a class='flowhubpush-token-remove-link button' href='#'>Remove</a></td><td><a class='flowhubpush-token-hide-link button' href='#'>Hide</a></td><td><a class='flowhubpush-token-check-link button' href='#'>Check</a></td><td><a class='flowhubpush-token-copy-link button' href='#'>Copy</a></td></tr>")}function addEventHandlersToTokenList(n){$(".flowhubpush-token-copy-link").off("click"),$(".flowhubpush-token-copy-link").on("click",e=>{RED.clipboard.copyText($($(e.target).closest("tr")).data("token"))&&RED.notify("Token copied","success")}),$(".flowhubpush-token-check-link").off("click"),$(".flowhubpush-token-check-link").on("click",e=>{checkToken($($(e.target).closest("tr")).data("token"))}),$(".flowhubpush-token-hide-link").off("click"),$(".flowhubpush-token-hide-link").on("click",e=>{e&&e.preventDefault();let t=$($(e.target).closest("tr"));$($(e.target).closest("tr")).fadeOut(300,()=>{RED.notify("Hidden token <b>"+t.data("name")+"</b>, will reappear with reload","success")})}),$(".flowhubpush-token-remove-link").off("click"),$(".flowhubpush-token-remove-link").on("click",e=>{e&&e.preventDefault();let t=$($(e.target).closest("tr")),o=n;confirm(`Remove token "${t.data("name")}"?`)&&$($(e.target).closest("tr")).fadeOut(300,()=>{o.tokens=o.tokens.filter(e=>!(e.name==t.data("name")&&e.val==t.data("token")&&e.type==t.data("type"))),o.credentials.tokens=o.tokens,RED.nodes.dirty(!0),RED.notify("Removed token <b>"+t.data("name")+"</b>.","success")})}),$(".flowhubpush-token-select-link").off("click"),$(".flowhubpush-token-select-link").on("click",e=>{e&&e.preventDefault();e=$($(e.target).closest("tr"));$(".flowhub-token-selected").removeClass("flowhub-token-selected"),$("#node-input-flowhubpush-apiToken").typedInput("value",e.data("token")),$("#node-input-flowhubpush-apiToken").typedInput("type",e.data("type")),e.addClass("flowhub-token-selected"),RED.notify("Using token <b>"+e.data("name")+"</b>","success")})}function showNextChangeButtonPressed(e){var t;e&&e.preventDefault(),0<$("#node-input-flowhubdiff-diffcontainer").find(".dv-pre-elem").length&&(e=parseInt($("#node-input-flowhubdiff-next-change-btn").data("cntr")),(t=$("#node-input-flowhubdiff-diffcontainer").find(".dv-pre-elem")[e])?(t.scrollIntoView(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",e+1)):(RED.notify("Cycled through all changes.",{type:"success"}),$("#node-input-flowhubdiff-next-change-btn").data("cntr",0)))}window.iframeHasBeenLoaded=iframeHasBeenLoaded;
+   function escapeHtml(e){return String(e).replace(/[&<>"'`=\/]/g,function(e){return entityMap[e]})}function zoomToNodeOrJunction(e){var t=$("#red-ui-workspace-chart"),o=RED.view.scale(),n=[(t[0].clientWidth-$("#red-ui-sidebar").width())/o,t[0].clientHeight/o],i=[t.scrollLeft()/o,t.scrollTop()/o],a=e.x,e=e.y;(a<i[0]||e<i[1]||n[0]+i[0]<a||n[1]+i[1]<e)&&t.animate({scrollLeft:"-="+(i[0]-a+n[0]/2)*o,scrollTop:"-="+(i[1]-e+n[1]/2)*o},200)}function checkToken(e,t){$("#flowhubpush-check-token-result-content").fadeOut(300,()=>{"empty"==e?(RED.notify("FlowHub token is good!",{type:"success",id:"FlowHubTokenCheck",timeout:2e3}),t&&$($($(t).find("a.flowhubpush-token-check-link")).find("i")).attr("class","fa fa-check-circle-o")):$.ajax({url:"FlowHubTokenCheck",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({token:e})}).done(e=>{if(!e.data)return t&&$($($(t).find("a.flowhubpush-token-check-link")).find("i")).attr("class","fa fa-times-circle-o"),RED.notify("Check failed: "+e.msg,{type:"error",id:"FlowHubTokenCheck",timeout:2e3});RED.notify("FlowHub token is good!",{type:"success",id:"FlowHubTokenCheck",timeout:2e3}),t&&$($($(t).find("a.flowhubpush-token-check-link")).find("i")).attr("class","fa fa-check-circle-o"),$("#flowhubpush-check-token-result-content").find(".user").attr("href","mailto:"+e.data.email).html(e.data.name),$("#flowhubpush-check-token-result-content").find(".email").html(e.data.email||"- undefined -"),$("#flowhubpush-check-token-result-content").find(".repo").attr("href",e.data.repo_url).html(e.data.repo),$("#flowhubpush-check-token-result-content").find(".permission").html(e.data.permission),$("#flowhubpush-check-token-result-content").find(".branch").html(e.data.branch),$("#flowhubpush-check-token-result-content").fadeIn(300)}).fail(e=>{t&&$($($(t).find("a.flowhubpush-token-check-link")).find("i")).attr("class","fa fa-times-circle-o"),RED.notify("Check failed: "+e.msg,{type:"error",id:"FlowHubTokenCheck",timeout:2e3})})})}var entityMap={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;","/":"&#x2F;","`":"&#x60;","=":"&#x3D;"},descMap={z:"Flow Tab Id",g:"Group Id",d:"Disabled"},linkNodeIds=["wires","links","nodes"],setOldToNewForNode=(e,t,o)=>{e[t]=o,e.dirty=!0,RED.nodes.dirty(!0),RED.view.redraw()},defaultRevertHandler=(e,t,o)=>{e=RED.nodes.node(e)||RED.nodes.junction(e);e&&setOldToNewForNode(e,t,o)},revertableAttributes={},revertableAttributesNames=(["x","y","template","name","info","func","label","tooltip","timeout","repeat"].forEach(function(e){revertableAttributes[e]=defaultRevertHandler}),Object.keys(revertableAttributes));function attrDesc(e){return descMap[e]?" <i style='font-size: 80%;'>("+descMap[e]+")</i>":""}function clickBaitDiff(){$("th.revertable").on("click",e=>{e.preventDefault();var t,o=$($(e.target).parent()).data("attr");confirm('Really revert changes to attribute "'+o+'"?')&&(t=revertableAttributes[o])&&t($($(e.target).parent()).data("id"),o,JSON.parse(atob($($(e.target).parent()).data("oldval"))))})}function createDiff(r,s){var c=[],f=[];try{if(Object.keys(s).forEach(function(e){var t;Object.keys(r).indexOf(e)<0&&(t="object"==typeof s[e]?JSON.stringify(s[e]):s[e],c.push("<tr class='dv-removed'><th>"+e+attrDesc(e)+"</th><td><i>MISSING</i></td><td><code>"+escapeHtml(t)+"</code></td></tr>"),f.push(e))}),Object.keys(r).forEach(function(e){var t;Object.keys(s).indexOf(e)<0&&(t="object"==typeof r[e]?JSON.stringify(r[e]):r[e],c.push("<tr class='dv-added'><th>"+e+attrDesc(e)+"</th><td><code>"+escapeHtml(t)+"</code></td><td><i>ADDED</i></td></tr>"),f.push(e))}),Object.keys(r).forEach(function(a){if(-1<Object.keys(s).indexOf(a))if(JSON.stringify(r[a])!==JSON.stringify(s[a]))try{let n=null,t=void 0;f.push(a);try{t=Diff.diffLines(s[a],r[a])}catch(e){t=Diff.diffLines(JSON.stringify(s[a],void 0,1),JSON.stringify(r[a],void 0,1))}let i=document.createDocumentFragment();t.forEach(e=>{let o=e.added?"green":e.removed?"red":"#040506";(n=document.createElement("pre")).setAttribute("class",e.added||e.removed?"dv-pre-elem":"dv-pre-elem-no-change"),n.style.color=o,-1<linkNodeIds.indexOf(a)&&e.value.match(/[0-9a-f]{16}/)?e.value.split(/([0-9a-fA-F]{16})/).forEach(e=>{var t;e.match(/[0-9a-fA-F]{16}/)?((t=document.createElement("a")).appendChild(document.createTextNode(e)),t.title="search for "+e,t.href="#",t.setAttribute("onclick",`javascript:RED.search.show('${e}'); return false`),t.style.color=o,n.appendChild(t)):n.appendChild(document.createTextNode(e))}):n.appendChild(document.createTextNode(e.value)),n.appendChild(document.createElement("br")),i.appendChild(n)});var o=-1<revertableAttributesNames.indexOf(a)?" revertable":"",e=document.createElement("tr");e.setAttribute("class","dv-differ"),e.setAttribute("data-id",r.id),e.setAttribute("data-attr",a);try{e.setAttribute("data-oldval",btoa(JSON.stringify(s[a])))}catch(e){o=""}var d,l=document.createElement("th");l.setAttribute("class",o),l.appendChild(document.createTextNode(a)),descMap[a]&&((d=document.createElement("i")).style["font-size"]="80%",d.appendChild(document.createTextNode("("+descMap[a]+")")),l.appendChild(d)),e.append(l),(l=document.createElement("td")).setAttribute("colspan","2"),l.append(i),e.append(l),c.push(e.outerHTML)}catch(e){console.log("--Exception",e),c.push("<tr><th class='dv-error'>"+a+" CAUSED EXCEP</th><td><code>"+escapeHtml(r[a])+"</code></td><td><code>"+escapeHtml(s[a])+"</code></td></tr>")}else c.push("<tr><th>"+a+"</th><td><code class=prop-code-value>"+escapeHtml(r[a])+"</code></td><td><code></code></td></tr>")}),0==f.length){let o=null;var e=Diff.diffJson(s,r);let n=document.createDocumentFragment();e.forEach(e=>{var t=e.added?"green":e.removed?"red":"#040506";(o=document.createElement("pre")).setAttribute("class",e.added||e.removed?"dv-pre-elem":"dv-pre-elem-no-change"),o.style.color=t,o.appendChild(document.createTextNode(e.value)),o.appendChild(document.createElement("br")),n.appendChild(o)});var t,i=document.createElement("tr"),a=(i.setAttribute("class","dv-differ"),document.createElement("th"));return a.appendChild(document.createTextNode("OBJ")),descMap.OBJ&&((t=document.createElement("i")).style["font-size"]="80%",t.appendChild(document.createTextNode("("+descMap.OBJ+")")),a.appendChild(t)),i.append(a),(a=document.createElement("td")).setAttribute("colspan","2"),a.append(n),i.append(a),{html:i.outerHTML,icon:"fa-question"}}}catch(e){console.log("Exception",e)}var o,n;return{html:c.join(""),icon:(e=f,n=[...o=["x","y","w","h","g","label"],"wires","d","nodes"],0==e.filter(e=>o.indexOf(e)<0).length?"fa-eye":0==e.filter(e=>n.indexOf(e)<0).length?"fa-paint-brush":"fa-pencil")}}function getInstalledNodeDetails(e){$.ajax({url:"nodes",headers:{Accept:"application/json"},success:e,error:()=>{e(["error"])}})}function doTokenCheck(e,t){$.ajax({url:"FlowHubTokenCheck",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({cfgnode:e}),success:function(e){t(e)},error:function(e,t,o){RED.notify("Check failed: "+t,{type:"error",id:"FlowHubTokenCheck",timeout:2e3})}})}function doPushSubmission(e,t,o,n,i){let a=RED.workspaces.active(),d=e.map(e=>e.type);n=n.filter(e=>-1<d.indexOf(e.types[0])),$.ajax({url:"FlowHubPush",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({flowid:a,flowdata:e||{},flowlabel:RED.nodes.workspace(a).label,cfgnode:t,svgdata:o,nodedetails:n,commit_date:i}),success:function(e){RED.notify("Submission triggered",{type:"warning",id:"FlowHubPush",timeout:2e3}),$("#flowhubpush-view-flow-link").fadeOut(300)},error:function(e,t,o){RED.notify("Submission failed: "+t,{type:"error",id:"FlowHubPush",timeout:2e3}),console.log(t,o)}})}function getFlowDataFromCurrentWorkspace(e){var e=e||RED.workspaces.active(),t=RED.nodes.groups(e),e=(t=(t=t.concat(RED.nodes.junctions(e))).concat(RED.nodes.filterNodes({z:e})),RED.nodes.eachConfig(function(e){e.z===RED.workspaces.active()&&!1===e._def.hasUsers&&t.push(e)}),RED.nodes.workspace(e)||RED.nodes.subflow(e));return t.unshift(e),RED.nodes.createExportableNodeSet(t)}function iframeRemoveHighlight(){document.getElementById("flowhubdiff-svgimageiframe").contentWindow.postMessage({msg:"removehighlight"},"*")}function iframeHighlightItem(e){iframeRemoveHighlight(),document.getElementById("flowhubdiff-svgimageiframe").contentWindow.postMessage({item:{label:e.label,icon:e.icon,class:e.class,sublabel:e.sublabel,objid:e.objid},msg:"highlightitem"},"*")}function iframeHasBeenLoaded(e){let t=$(e).data("flowid");var o=getFlowDataFromCurrentWorkspace(t);setTimeout(()=>{e.contentWindow&&e.contentWindow.postMessage({nodes:o,msg:"renderlocalflow",flowid:t||RED.workspaces.active()},"*")},345)}function doComparison(e,t){var n=RED.workspaces.active();if($("#node-input-flowhubdiff-next-change-btn").hide(),$("#node-input-flowhubdiff-prev-change-btn").hide(),$("#flowhubdiff-comparsion-status").hide(),RED.nodes.workspace(n))RED.notify("Flow Comparison Triggered",{type:"warning",id:"FlowHubDiff",timeout:2e3}),$.ajax({url:"FlowHubDiff",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({flowid:n,flowhub:"submission from ",flowdata:e||{},flowlabel:RED.nodes.workspace(n).label,cfgnode:t}),success:function(t){var e,d=[],l={};if("failed"==t.status){RED.notify(t.msg||"This does not seem to be a FlowHub flow id: "+n,{type:"error",timeout:2e3}),$("#flowhubdiff-view-flow-link").hide();try{$("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-svgcontainer").html(""),$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){}}else if(t.revision&&""!=t.revision&&(e=ensureYourConfigNodeExists()).flowrevisions&&e.flowrevisions[t.flowid]&&e.flowrevisions[t.flowid].substr(0,8)!=t.revision.substr(0,8)&&RED.notify(`WARNING: Revision mismatch: Local: ${e.flowrevisions[t.flowid].substr(0,8)}, Remote: `+t.revision.substr(0,8),{type:"warning",timeout:4e3}),t.url?$("#flowhubdiff-view-flow-link").attr("href",t.url).fadeIn(300):obtainFhbToken(obtainConfigNode(),e=>{(""!==e&&e?$("#flowhubdiff-view-flow-link").attr("href","https://flowhub.org/f/"+t.flowid+"?t="+tokenToUrl(e)):$("#flowhubdiff-view-flow-link").attr("href","https://flowhub.org/f/"+t.flowid)).show()}),t.changes.forEach(function(e){var t,o,n,i,a=e.id;"deleted"==e.type?(l[a]={label:e.oldObj.name||e.oldObj.type,icon:"fa fa-trash",class:"",diffcontent:createDiff({},e.oldObj).html,sublabel:e.oldObj.type,selected:!1,checkbox:!1,children:void 0,objid:a},d.push(l[a])):"added"==e.type?(l[a]={objid:a,label:e.newObj.name||e.newObj.type,icon:"fa fa-plus-square",class:"",diffcontent:createDiff(e.newObj,{}).html,sublabel:e.newObj.type,selected:!1,checkbox:!1,children:void 0},d.push(l[a])):"tab"==e.oldObj.type||"group"==e.oldObj.type||"junction"==e.oldObj.type?(i=createDiff(e.newObj,e.oldObj),l[a]={objid:a,label:e.oldObj.name||e.oldObj.type,icon:"fa "+i.icon,class:"",diffcontent:i.html,sublabel:e.type+" - "+e.oldObj.type,selected:!1,checkbox:!1,children:void 0},d.push(l[a])):(t=RED.nodes.node(a))?((o=RED.nodes.getType(t.type))&&(n=("function"==typeof(n=o.label)?n.call(t):n)||""),o&&n||(n=t.type),i=createDiff(e.newObj,e.oldObj),l[t.id]={node:t,objid:a,label:n,icon:"fa "+i.icon,class:"",diffcontent:i.html,sublabel:e.oldObj.type,selected:!1,checkbox:!1,children:void 0},d.push(l[t.id])):console.log("Node ignore, Type: "+e.type,e)}),t.ifurl&&$("#node-input-flowhubdiff-svgcontainer").html('<iframe id="flowhubdiff-svgimageiframe" width="100%" height="100%" src="'+t.ifurl+'" onload="window.iframeHasBeenLoaded(this)" style="border: none; min-height: 300px;" data-flowid="'+n+'"></iframe>'),0==d.length){RED.notify("No Flow Changes",{type:"warning",timeout:2e3});try{$("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){}}else{try{$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){$("#node-input-flowhubdiff-target-container-div").css({width:"100%",height:"calc(100%)"}).treeList({multi:!1}).on("treelistitemmouseover",function(e,t){t.objid&&iframeHighlightItem(t)}).on("treelistitemmouseout",function(e,t){}).on("treelistselect",function(e,t){t.objid&&(RED.view.reveal(t.objid,!0),RED.view.redraw()),t.diffcontent?($("#node-input-flowhubdiff-next-change-btn").show(),$("#node-input-flowhubdiff-prev-change-btn").show(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",-1),$("#flowhubdiff-comparsion-status").hide(),$("#node-input-flowhubdiff-diffcontainer").html(t.diffcontent),clickBaitDiff(),setTimeout(()=>{var e=$("#node-input-flowhubdiff-diffcontainer").find(".dv-pre-elem").length;0<e&&RED.notify("Total changes: "+e,{type:"success"})},300)):($("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-next-change-btn").hide(),$("#node-input-flowhubdiff-prev-change-btn").hide(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",void 0),$("#flowhubdiff-comparsion-status").hide())}).on("treelistconfirm",function(e,t){var o;t.objid&&(o=t.objid,setTimeout(()=>{var e;RED.nodes.node(o)?(RED.view.reveal(o),RED.view.select(o),RED.editor.edit(RED.nodes.node(o))):o==RED.workspaces.active()?RED.workspaces.edit():RED.nodes.junction(o)&&(e=RED.nodes.junction(o),$($(`g[transform="translate(${e.x},${e.y})"] rect`)[0]).addClass("red-ui-flow-junction-hovered"),$(`g[transform="translate(${e.x},${e.y})"]`).addClass("selected"),RED.view.select({nodes:[e]}),zoomToNodeOrJunction(e))},50))}),$("#node-input-flowhubdiff-target-filter").show();var o=$("#node-input-flowhubdiff-target-filter").searchBox({style:"compact",delay:300,change:function(){var e,t=$(this).val().trim().toLowerCase();""===t?($("#node-input-flowhubdiff-target-container-div").treeList("filter",null),o.searchBox("count","")):(e=$("#node-input-flowhubdiff-target-container-div").treeList("filter",function(e){return-1<e.label.toLowerCase().indexOf(t)||-1<e.node.type.toLowerCase().indexOf(t)}),o.searchBox("count",e+" / "+$("#node-input-flowhubdiff-target-container-div").treeList("data").length))}})}$("#node-input-flowhubdiff-target-container-div").treeList("data",d.sort((e,t)=>e.icon==t.icon?e.label.toLowerCase()>t.label.toLowerCase():e.icon>t.icon))}},error:function(e,t,o){$("#flowhubdiff-view-flow-link").hide();try{$("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-svgcontainer").html(""),$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){}404==e.status?RED.notify("Node has not yet been deployed, please deploy.","error"):405==e.status?RED.notify("Not Allowed.","error"):500==e.status?RED.notify("Not Allowed - 500.","error"):0==e.status?RED.notify("Not Allowed - 0.","error"):RED.notify("Not Allowed - Unexpected.","error")}});else{RED.notify("Comparing subflows not supported.",{type:"error",id:"FlowHubDiff",timeout:2e3}),$("#flowhubdiff-view-flow-link").hide();try{$("#node-input-flowhubdiff-diffcontainer").html(""),$("#node-input-flowhubdiff-svgcontainer").html(""),$("#node-input-flowhubdiff-target-container-div").treeList("empty")}catch(e){}}}function addTokenToList(e,t){var o=!(t.val||"").startsWith("local://");$("#node-input-flowhubpush-token-list").append(`<tr class='${e}' data-type='${t.type}' data-name='${t.name}' data-token='${t.val}'>`+`<td><a class='flowhubpush-token-select-link' href='#'>${t.name}</a></td>`+"<td><a class='flowhubpush-token-select-link button' style='display: none;' href='#'>Use</a></td><td><a class='flowhubpush-token-hide-link button' style='display: none;' href='#'>Hide</a></td><td><a class='flowhubpush-token-check-link button' href='#' title='check token'><i class='fa fa-circle-o'></i></a></td><td><a class='flowhubpush-token-copy-link button' href='#' title='copy token'><i class='fa fa-files-o'></i></a></td>"+`<td><a class='flowhubpush-token-create-new-branch button ${o?"disabled":""}' href='#' title='create a new branch'><i class='fa fa-code-fork'></i></a></td>`+"<td><a class='flowhubpush-token-remove-link button' href='#' title='delete token'><i class='fa fa-trash'></i></a></td></tr>")}function createNewBranch(e,t){e.startsWith("local://")?(t=$(t).data("name"),(t=prompt(`Enter new branchname for <b>${t}</b>`))&&$.ajax({url:"FlowHubCreateBranch",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({token:e,branchname:t}),success:function(e){"ok"==e.status?($("#node-input-flowhubpush-new-token-field").val(e.token),$("#node-input-flowhubpush-new-token-name-field").val(e.name),RED.notify("Check token and add if ok",{type:"success"})):RED.notify("Failed",{type:"success"})},error:function(e,t,o){RED.notify("Branch creation failed",{type:"error"})}})):RED.notify("Not possible",{type:"error"})}function addEventHandlersToTokenList(n){$(".flowhubpush-token-copy-link").off("click"),$(".flowhubpush-token-copy-link").on("click",e=>{RED.clipboard.copyText($($(e.target).closest("tr")).data("token"))&&RED.notify("Token copied","success")}),$(".flowhubpush-token-create-new-branch").off("click"),$(".flowhubpush-token-create-new-branch").on("click",e=>{createNewBranch($($(e.target).closest("tr")).data("token"),$(e.target).closest("tr"))}),$(".flowhubpush-token-check-link").off("click"),$(".flowhubpush-token-check-link").on("click",e=>{checkToken($($(e.target).closest("tr")).data("token"),$(e.target).closest("tr"))}),$(".flowhubpush-token-hide-link").off("click"),$(".flowhubpush-token-hide-link").on("click",e=>{e&&e.preventDefault();let t=$($(e.target).closest("tr"));$($(e.target).closest("tr")).fadeOut(300,()=>{RED.notify("Hidden token <b>"+t.data("name")+"</b>, will reappear with reload","success")})}),$(".flowhubpush-token-remove-link").off("click"),$(".flowhubpush-token-remove-link").on("click",e=>{e&&e.preventDefault();let t=$($(e.target).closest("tr")),o=n;confirm(`Remove token "${t.data("name")}"?`)&&$($(e.target).closest("tr")).fadeOut(300,()=>{o.tokens=o.tokens.filter(e=>!(e.name==t.data("name")&&e.val==t.data("token")&&e.type==t.data("type"))),o.credentials.tokens=o.tokens,RED.nodes.dirty(!0),RED.notify("Removed token <b>"+t.data("name")+"</b>.","success")})}),$(".flowhubpush-token-select-link").off("click"),$(".flowhubpush-token-select-link").on("click",e=>{e&&e.preventDefault();e=$($(e.target).closest("tr"));$(".flowhub-token-selected").removeClass("flowhub-token-selected"),$("#node-input-flowhubpush-apiToken").typedInput("value",e.data("token")),$("#node-input-flowhubpush-apiToken").typedInput("type",e.data("type")),e.addClass("flowhub-token-selected"),RED.events.emit("flowhub:tokenselected",{token:e.data("token"),type:e.data("type"),name:e.data("name")}),RED.notify("Using token <b>"+e.data("name")+"</b>","success")})}function showNextChangeButtonPressed(e){e&&e.preventDefault();var t,o,e=$("#node-input-flowhubdiff-diffcontainer").find(".dv-pre-elem").length;0<e&&(t=parseInt($("#node-input-flowhubdiff-next-change-btn").data("cntr")),(o=$("#node-input-flowhubdiff-diffcontainer").find(".dv-pre-elem")[t+1])?(o.scrollIntoView(),$("#flowhubdiff-comparsion-status").html(t+2+" / "+e).show(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",t+1)):(RED.notify("Cycled through all changes.",{type:"success"}),$("#flowhubdiff-comparsion-status").hide(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",-1)))}function showPreviousChangeButtonPressed(e){e&&e.preventDefault();var t,o,e=$("#node-input-flowhubdiff-diffcontainer").find(".dv-pre-elem").length;0<e&&(t=parseInt($("#node-input-flowhubdiff-next-change-btn").data("cntr")),(o=$("#node-input-flowhubdiff-diffcontainer").find(".dv-pre-elem")[t-1])?(o.scrollIntoView(),$("#flowhubdiff-comparsion-status").html(t+" / "+e).show(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",t-1)):(RED.notify("Cycled through all changes.",{type:"success"}),$("#flowhubdiff-comparsion-status").hide(),$("#node-input-flowhubdiff-next-change-btn").data("cntr",-1)))}window.iframeHasBeenLoaded=iframeHasBeenLoaded;
 
    function nr_intro_generate_svg_5_0(n){return t=>{try{handleSvgObject($($("#red-ui-workspace-chart").find("svg")[0]),t)}catch(e){var r="Error Generating SVG: "+JSON.stringify(e);n.notify(r,{type:"error"}),t('<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="1000" height="1000" viewBox="0 0 1000 1000" pointer-events="all" style="cursor: crosshair; touch-action: none;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>.small { font: bold 20px sans-serif; fill: red;}</style><text x="10" y="30" class="small">'+r+"</text></svg>")}}}function nr_intro_generate_svg_4_1(n){return t=>{try{handleSvgObject($($("#red-ui-workspace-chart").find("svg")[0]),t)}catch(e){var r="Error Generating SVG: "+JSON.stringify(e);n.notify(r,{type:"error"}),t('<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="1000" height="1000" viewBox="0 0 1000 1000" pointer-events="all" style="cursor: crosshair; touch-action: none;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>.small { font: bold 20px sans-serif; fill: red;}</style><text x="10" y="30" class="small">'+r+"</text></svg>")}}}function nr_intro_generate_svg_4_0(n){return t=>{try{handleSvgObject($($("#red-ui-workspace-chart").find("svg")[0]),t)}catch(e){var r="Error Generating SVG: "+JSON.stringify(e);n.notify(r,{type:"error"}),t('<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="1000" height="1000" viewBox="0 0 1000 1000" pointer-events="all" style="cursor: crosshair; touch-action: none;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>.small { font: bold 20px sans-serif; fill: red;}</style><text x="10" y="30" class="small">'+r+"</text></svg>")}}}function nr_intro_generate_svg_3_1(n){return t=>{try{handleSvgObject($($("#red-ui-workspace-chart").find("svg")[0]),t)}catch(e){var r="Error Generating SVG: "+JSON.stringify(e);n.notify(r,{type:"error"}),t('<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="1000" height="1000" viewBox="0 0 1000 1000" pointer-events="all" style="cursor: crosshair; touch-action: none;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>.small { font: bold 20px sans-serif; fill: red;}</style><text x="10" y="30" class="small">'+r+"</text></svg>")}}}function nr_intro_generate_svg_3_0(n){return t=>{try{handleSvgObject($($("svg")[0]),t)}catch(e){var r="Error Generating SVG: "+JSON.stringify(e);n.notify(r,{type:"error"}),t('<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="1000" height="1000" viewBox="0 0 1000 1000" pointer-events="all" style="cursor: crosshair; touch-action: none;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>.small { font: bold 20px sans-serif; fill: red;}</style><text x="10" y="30" class="small">'+r+"</text></svg>")}}}function handleSvgObject(o,e){o.find("g.red-ui-flow-group-selected").removeClass("red-ui-flow-group-selected"),o.find("rect.red-ui-flow-group-outline-select").css("stroke-opacity","0"),o.find(".red-ui-flow-node-selected").removeClass("red-ui-flow-node-selected"),o.find(".red-ui-flow-link-selected").removeClass("red-ui-flow-link-selected");var t=o.clone(),r=(t.find("foreignObject").remove(),t.find(".mindmap-image-preview-element").remove(),t.find("svg.__screenshot").remove(),'width="'+o.attr("width")+'" height="'+o.attr("height")+'"'),n=RED.settings.version.split("."),s=parseInt(n[0]),n=parseInt(n[1]);if(3==s&&1==n||4==s&&0==n){var i=$($($(o).children("g")[0]).children("g")[0]).children("g"),a={x:8e3,y:8e3,w:-1,h:-1};for(let e=1;e<i.length;e++){var l=i[e].getBBox();0==l.width&&0==l.height||(a.x=Math.min(l.x,a.x),a.y=Math.min(l.y,a.y),a.w=Math.max(l.width,a.w),a.h=Math.max(l.height,a.h))}r+=` viewBox='${a.x} ${a.y} ${a.w} ${a.h}'`}function g(e,t){for(var r=0;r<e.length;r++){var s=e.item(r),i=t[r];["stroke-width","fill-opacity","stroke-opacity","opacity","stroke-dasharray"].forEach(function(e){s.setAttribute(e,$(i).attr(e)||$(i).css(e))}),["fill","stroke"].forEach(function(e){var t,r,n=(t=$(i).attr(e)||$(i).css(e))&&null!==t&&"none"!=t?(r=t.match(/^#(.)(.)(.)$/))?"#"+r[1]+r[1]+r[2]+r[2]+r[3]+r[3]:(r=t.match(/^#......$/))?t:null===(r=t.match(/^rgb\(([0-9]+),\s+([0-9]+),\s+([0-9]+)/))?(n=t.match(/^rgba\(([0-9]+),\s+([0-9]+),\s+([0-9]+),\s+([0-9]+)/))?{clr:"#"+("0"+parseInt(n[1],10).toString(16)).slice(-2)+("0"+parseInt(n[2],10).toString(16)).slice(-2)+("0"+parseInt(n[3],10).toString(16)).slice(-2),opa:n[4]}:t:"#"+("0"+parseInt(r[1],10).toString(16)).slice(-2)+("0"+parseInt(r[2],10).toString(16)).slice(-2)+("0"+parseInt(r[3],10).toString(16)).slice(-2):"none";"object"==typeof n?(s.setAttribute(e+"-opacity",n.opa),s.setAttribute(e,n.clr)):s.setAttribute(e,n)}),$(i).hasClass("hide")&&("g"==s.tagName&&s.setAttribute("opacity","0"),s.setAttribute("visibility","hidden"))}}var s='<?xml version="1.0" standalone="no"?>\r\n<svg '+r+' pointer-events="all" style="cursor: crosshair; touch-action: none;" xmlns="http://www.w3.org/2000/svg" class="__screenshot" xmlns:xlink="http://www.w3.org/1999/xlink">\r\n',n=t.html(),c=(new DOMParser).parseFromString(s+n+"\r\n</svg>","image/svg+xml"),h=t=>(["g","rect","line","path","circle","image","text"].forEach(e=>{$(t.getElementsByTagName(e)).each((e,t)=>{t.setAttribute("class",""),t.setAttribute("id","")})}),t),f=(["g","rect","line","path","circle","image"].forEach(function(e){g(c.getElementsByTagName(e),o.find(e))}),["text"].forEach(function(e){g(c.getElementsByTagName(e),o.find(e));for(var t=c.getElementsByTagName(e),r=o.find(e),n=0;n<t.length;n++){var s=t.item(n),i=r[n];["font-family","font-size","font-size-adjust","font-stretch","font-style","font-variant","font-weight","text-anchor","dominant-baseline"].forEach(function(e){s.setAttribute(e,$(i).attr(e)||$(i).css(e))})}}),c.getElementsByTagName("image")),v={},w=(r,n,s)=>{var i=r.getAttribute("xlink:href")||r.getAttribute("href");if(!i)return s(n-1);var o=i.substr(-4,4).toLowerCase(),a={".jpg":"jpeg",jpeg:"jpeg",".png":"png",".svg":"svg+xml"};if(v[i])return r.setAttribute("xlink:href","data:image/"+a[o]+";base64,"+v[i]),s(n-1);switch(o){case".jpg":case"jpeg":case".png":var l=new XMLHttpRequest;l.open("GET",i,!0),l.responseType="arraybuffer";l.onerror=function(e){s(n-1)},l.onload=function(e){var t=l.response;t&&(t=(e=>{for(var t="",r=new Uint8Array(e),n=r.byteLength,s=0;s<n;s++)t+=String.fromCharCode(r[s]);return window.btoa(t)})(t),v[i]=t,r.setAttribute("xlink:href","data:image/"+a[o]+";base64,"+t)),s(n-1)},l.send(null);break;case".svg":$.get(i,function(e){var t=new XMLSerializer,t=btoa(t.serializeToString(e));v[i]=t,r.setAttribute("xlink:href","data:image/svg+xml;base64,"+t),s(n-1)});break;default:s(n-1)}},d=t=>{if(t<0)e((new XMLSerializer).serializeToString(h(c)));else try{w(f.item(t),t,d)}catch(e){d(t-1)}};0<f.length?w(f.item(f.length-1),f.length-1,d):e((new XMLSerializer).serializeToString(h(c)))}function svgGeneratorFunctionForVersion(e){var r,t=e.settings.version.split("."),n=t[0],t=t[1];if("3"==n){if("0"==t)return nr_intro_generate_svg_3_0(e);if("1"==t)return nr_intro_generate_svg_3_1(e)}if("4"==n){if("0"==t)return nr_intro_generate_svg_4_0(e);if("1"==t)return nr_intro_generate_svg_4_1(e)}return"5"==n&&"0"==t?nr_intro_generate_svg_5_0(e):(r=e,e=>{var t="Node-RED version ("+r.settings.version+") not supported";r.notify(t,{type:"error"}),e&&e('<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="1000" height="1000" viewBox="0 0 1000 1000" pointer-events="all" style="cursor: crosshair; touch-action: none;" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>.small { font: bold 20px sans-serif; fill: red;}</style><text x="10" y="30" class="small">'+t+"</text></svg>")})}
    
@@ -75,7 +75,7 @@
       return globalYourConfigNode
    }
 
-   function flowHubPullUpdateFlows(e=null,o=null){let t=t=>{if($("#func-sidebar-flowhub-pull-spinner").hide(),$("#node-input-flowhub-pull-spinner").hide(),"failed"==t.status)return RED.notify(t.msg,{type:"error",id:"FlowHubPull",timeout:4e3});let i=[],r={},l=[];Object.keys(t.data).forEach(function(e){var o=t.data[e].name.match(/^(\[.+\])/);o?r[o[0]]?r[o[0]].push(t.data[e]):r[o[0]]=[t.data[e]]:l.push(t.data[e])}),Object.keys(r).sort((e,o)=>e<o?-1:1).forEach(e=>{var o=r[e].map(e=>({label:e.name,icon:"fa "+(RED.nodes.workspace(e.id)?"fa-check-circle-o":""),flowid:e.id,sublabel:e.id,selected:$("#node-input-flowhubpull-flowid").val()==e.id,checkbox:!1,children:void 0}));i.push({label:e,icon:"",flowid:"",sublabel:"",selected:!1,checkbox:!1,children:o.sort((e,o)=>e.label<o.label?-1:1)})}),l.sort((e,o)=>e.name<o.name?-1:1).forEach(e=>{i.push({label:e.name,icon:"fa "+(RED.nodes.workspace(e.id)?"fa-check-circle-o":""),flowid:e.id,sublabel:e.id,selected:$("#node-input-flowhubpull-flowid").val()==e.id,checkbox:!1,children:void 0})}),e&&e(i)};$.get({url:"https://api.flowhub.org/v1/flows?cb="+(new Date).getTime(),headers:{"X-FHB-TOKEN":o}}).done(e=>{t(e)}).fail(e=>{var i="";"rejected"==e.state()?$.ajax({url:"FlowHubCatalogue",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({token:o}),success:function(e){t(e)},error:function(e,o,t){$("#func-sidebar-flowhub-pull-spinner").hide(),$("#node-input-flowhub-pull-spinner").hide(),i="<p>Failed to retrieve FlowHub catalogue, request blocked.</p><p>Request: <b>https://api.flowhub.org/v1/flows</b></p><p>AdBlocker or uBlock might have prevented request.</p><p>Please check browser console for more details.</p>",console.log("Error",o),RED.notify(i,{type:"error",id:"FlowHubPull",timeout:4e3})}}):($("#func-sidebar-flowhub-pull-spinner").hide(),$("#node-input-flowhub-pull-spinner").hide(),i="<p>Failed to retrieve FlowHub catalogue.</p><p>Check browser console for more details.</p>",console.warn("Error loading https://api.flowhub.org/v1/flows:",e),RED.notify(i,{type:"error",id:"FlowHubPull",timeout:4e3}))})}function obtainConfigNode(){let o=[];return RED.nodes.eachConfig(function(e){"FlowHubCfg"===e.type&&o.push(e)}),o[0]}function tokenToUrl(e){e=e.substring(4);var o="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_".split("");let t=Object.fromEntries(o.map((e,o)=>[e,o])),i=Object.fromEntries(o.map((e,o)=>[o,e]));return e.replaceAll(/./gi,(e,o)=>i[(t[e]+o+1)%64])}function obtainFhbToken(e,i){$.ajax({url:"FlowHubToken",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({cfgnode:e}),success:function(e){i(e.token)},error:function(e,o,t){i("")}})}function doFlowImportForSidebar(i,e){var o=$("#node-input-flowhubpull-flowid").val().trim();""==$("#node-input-flowhubpull-flowrevision").val().trim()&&RED.nodes.workspace(o)?(RED.notify("Remove existing flow tab to re-import",{type:"warning"}),RED.view.reveal(o)):(RED.notify("Pull triggered",{type:"warning",timeout:3e3}),$.get({url:"https://api.flowhub.org/v3/flows/"+$("#node-input-flowhubpull-flowid").val().trim()+"?cb="+(new Date).getTime()+"&v="+$("#node-input-flowhubpull-flowrevision").val().trim(),headers:{"X-FHB-TOKEN":e,"User-Agent":"FlowHub.org Sidebar"}}).done((o,e)=>{try{if(!o||!o.flowdata||!Array.isArray(JSON.parse(o.flowdata)))return RED.notify("Access denied or revision not found.",{type:"error",timeout:3e3})}catch(e){return RED.notify("Access Denied, parse error.",{type:"error",timeout:3e3})}var t;RED.nodes.workspace(o.flowid)||((t=ensureYourConfigNodeExists()).flowrevisions||={},t.flowrevisions[o.flowid]!=o.revision&&(t.flowrevisions[o.flowid]=o.revision)),RED.clipboard.import(),setTimeout(()=>{var e=JSON.parse(o.flowdata);i&&(e=e.filter(function(e){return"tab"!=e.type})),$("#red-ui-clipboard-dialog-import-text").val(JSON.stringify(e)).trigger("paste")},300)}).fail(e=>{var o="<p>Failed to retrieve flow data from FlowHub, request blocked.</p><p>Request: https://api.flowhub.org/v3/flows/"+$("#node-input-flowhubpull-flowid").val().trim()+"</p><p>AdBlocker or uBlock might have prevented request.</p><p>Please check browser console for more details.</p>";RED.notify(o,{type:"error",id:"FlowHubPull",timeout:4e3})}))}function doFlowImportForPullNode(e,o){RED.notify("Pull triggered",{type:"warning",timeout:3e3});$.get({url:"https://api.flowhub.org/v3/flows/"+$("#node-input-flowid").val().trim()+"?cb="+(new Date).getTime()+"&v="+$("#node-input-flowrevision").val().trim(),headers:{"X-FHB-TOKEN":o,"User-Agent":"FlowHub.org Pull Node"}}).done((o,e)=>{try{if(!o||!o.flowdata||!Array.isArray(JSON.parse(o.flowdata)))return RED.notify("Access denied or revision not found.",{type:"error",timeout:3e3})}catch(e){return RED.notify("Access Denied, parse error.",{type:"error",timeout:3e3})}var t;RED.nodes.workspace(o.flowid)||(t=(()=>{let o=void 0;return RED.nodes.eachConfig(function(e){"FlowHubCfg"===e.type&&(o=e)}),o})())&&(t.flowrevisions||={},t.flowrevisions[o.flowid]!=o.revision)&&(t.flowrevisions[o.flowid]=o.revision),RED.clipboard.import(),setTimeout(()=>{var e=JSON.parse(o.flowdata);$("#red-ui-clipboard-dialog-import-text").val(JSON.stringify(e)).trigger("paste")},300)}).fail(e=>{var o="<p>Failed to retrieve flow data from FlowHub, request blocked.</p><p>Request: https://api.flowhub.org/v3/flows/"+$("#node-input-flowhubpull-flowid").val().trim()+"</p><p>AdBlocker or uBlock might have prevented request.</p><p>Please check browser console for more details.</p>";RED.notify(o,{type:"error",id:"FlowHubPull",timeout:4e3})})}function checkForDuplication(e){$.get({url:"https://api.flowhub.org/v1/flows/"+$("#node-input-flowhubpull-flowid").val()+"?cb="+(new Date).getTime()+"&v="+$("#node-input-flowhubpull-flowrevision").val(),headers:{"X-FHB-TOKEN":e}},function(e,o){let t=[];if(!Array.isArray(e))return RED.notify("Access denied or revision not found.","error");if(e.forEach((e,o)=>{"tab"==e.type?RED.nodes.workspace(e.id)&&t.push(e):"junction"==e.type?RED.nodes.junction(e.id)&&t.push(e):"group"==e.type?RED.nodes.group(e.id)&&t.push(e):"subflow"==e.type?RED.nodes.subflow(e.id)&&t.push(e):RED.nodes.node(e.id)&&t.push(e)}),0==t.length){RED.notify("Found no duplication.","success");try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){}}else{RED.notify("Found "+t.length+" items of duplication","warning");try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){$("#node-input-flowhubpull-sb-duplication-container-div").css({width:"100%",height:"calc(100%)"}).treeList({multi:!1}).on("treelistitemmouseover",function(e,o){}).on("treelistitemmouseout",function(e,o){}).on("treelistselect",function(e,o){o.node&&(RED.workspaces.show(o.node.z,!1,!1,!0),RED.view.reveal(o.node.id,!0),RED.view.redraw())}).on("treelistconfirm",function(e,o){var t;o.node&&(t=o.node.id,setTimeout(()=>{var e=RED.nodes.node(t);e&&(RED.view.reveal(e.id),RED.view.select(e.id),RED.editor.edit(e)),t==RED.workspaces.active()&&RED.workspaces.edit()},50))})}t=t.map(e=>({node:e,label:e.id,sublabel:e.type,selected:!1,checkbox:!1})),$("#node-input-flowhubpull-sb-duplication-container-div").treeList("data",t)}})}
+   function frontendHostUrlForToken(e){return e&&e.startsWith("local://")?e.replace(/local:\/\//,"").split("?")[0]:"https://flowhub.org"}function flowHubPullUpdateFlows(o=null,e=null){$.ajax({url:"FlowHubCatalogue",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({token:e}),success:function(e){(t=>{if($("#func-sidebar-flowhub-pull-spinner").hide(),$("#node-input-flowhub-pull-spinner").hide(),"failed"==t.status)return RED.notify(t.msg,{type:"error",id:"FlowHubPull",timeout:4e3});let i=[],r={},n=[];Object.keys(t.data).forEach(function(e){var o=t.data[e].name.match(/^(\[.+\])/);o?r[o[0]]?r[o[0]].push(t.data[e]):r[o[0]]=[t.data[e]]:n.push(t.data[e])}),Object.keys(r).sort((e,o)=>e<o?-1:1).forEach(e=>{var o=r[e].map(e=>({label:e.name,url:e.url,icon:"fa "+(RED.nodes.workspace(e.id)?"fa-check-circle-o":""),flowid:e.id,sublabel:e.id,selected:$("#node-input-flowhubpull-flowid").val()==e.id,checkbox:!1,children:void 0}));i.push({label:e,icon:"",flowid:"",sublabel:"",selected:!1,checkbox:!1,children:o.sort((e,o)=>e.label<o.label?-1:1)})}),n.sort((e,o)=>e.name<o.name?-1:1).forEach(e=>{i.push({label:e.name,url:e.url,icon:"fa "+(RED.nodes.workspace(e.id)?"fa-check-circle-o":""),flowid:e.id,sublabel:e.id,selected:$("#node-input-flowhubpull-flowid").val()==e.id,checkbox:!1,children:void 0})}),o&&o(i)})(e)},error:function(e,o,t){$("#func-sidebar-flowhub-pull-spinner").hide(),$("#node-input-flowhub-pull-spinner").hide(),console.log(e),console.log(t),console.log("Error",o),e&&418==e.status?RED.notify("<p>Failed to retrieve git catalogue, request returned empty response.</p><p>Please request the admin of the gitstore to have a look at the gitstore cache.</p>",{type:"warning",id:"FlowHubPull",timeout:4e3}):RED.notify("<p>Failed to retrieve FlowHub catalogue, request blocked.</p><p>FlowHub.org server might be down or GitHub might be down, please be patient.</p>",{type:"error",id:"FlowHubPull",timeout:4e3})}})}function obtainConfigNode(){let o=[];return RED.nodes.eachConfig(function(e){"FlowHubCfg"===e.type&&o.push(e)}),o[0]}function tokenToUrl(e){if(!e.startsWith("local://")){e=e.substring(4);var o="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_".split("");let t=Object.fromEntries(o.map((e,o)=>[e,o])),i=Object.fromEntries(o.map((e,o)=>[o,e]));return e.replaceAll(/./gi,(e,o)=>i[(t[e]+o+1)%64])}encodeURIComponent(e)}function obtainFhbToken(e,i){$.ajax({url:"FlowHubToken",type:"POST",contentType:"application/json; charset=utf-8",data:JSON.stringify({cfgnode:e}),success:function(e){i(e.token)},error:function(e,o,t){i("")}})}function doFlowImportForSidebar(i,e){var o=$("#node-input-flowhubpull-flowid").val().trim();RED.nodes.workspace(o)?(RED.notify("Remove existing flow tab to re-import",{type:"warning"}),RED.view.reveal(o)):(RED.notify("Pull triggered",{type:"warning",timeout:3e3}),$.ajax({url:"FlowHubPull",type:"POST",contentType:"application/json; charset=utf-8",headers:{"X-FHB-TOKEN":e,"User-Agent":"FlowHub.org Sidebar"},data:JSON.stringify({token:e,flowid:$("#node-input-flowhubpull-flowid").val().trim(),revision:$("#node-input-flowhubpull-flowrevision").val().trim()})}).done((o,e)=>{try{if(!o||!o.flowdata||!Array.isArray(JSON.parse(o.flowdata)))return""!=$("#node-input-flowhubpull-flowrevision").val()&&$("#node-input-flowhubpull-flowrevision").animate({"background-color":"#ccc"},300).animate({"background-color":"white"},300).animate({"background-color":"#ccc"},300).animate({"background-color":"white"},300).animate({"background-color":"#ccc"},300).animate({"background-color":"white"},300).animate({"background-color":"#ccc"},300).animate({"background-color":"white"},300),RED.notify("Access denied or revision not found.",{type:"error",timeout:3e3})}catch(e){return RED.notify("Access Denied, parse error.",{type:"error",timeout:3e3})}var t;RED.nodes.workspace(o.flowid)||((t=ensureYourConfigNodeExists()).flowrevisions||={},t.flowrevisions[o.flowid]!=o.revision&&(t.flowrevisions[o.flowid]=o.revision)),RED.clipboard.import(),setTimeout(()=>{var e=JSON.parse(o.flowdata);i&&(e=e.filter(function(e){return"tab"!=e.type})),$("#red-ui-clipboard-dialog-import-text").val(JSON.stringify(e)).trigger("paste")},300)}).fail(e=>{var o="<p>Failed to retrieve flow data from FlowHub, request blocked.</p><p>Request: https://api.flowhub.org/v3/flows/"+$("#node-input-flowhubpull-flowid").val().trim()+"</p><p>AdBlocker or uBlock might have prevented request.</p><p>Please check browser console for more details.</p>";RED.notify(o,{type:"error",id:"FlowHubPull",timeout:4e3})}))}function doFlowImportForPullNode(e,o){RED.notify("Pull triggered",{type:"warning",timeout:3e3});$.ajax({url:"FlowHubPull",type:"POST",contentType:"application/json; charset=utf-8",headers:{"X-FHB-TOKEN":o,"User-Agent":"FlowHub.org Sidebar"},data:JSON.stringify({token:o,flowid:$("#node-input-flowid").val().trim(),revision:$("#node-input-flowrevision").val().trim()})}).done((o,e)=>{try{if(!o||!o.flowdata||!Array.isArray(JSON.parse(o.flowdata)))return RED.notify("Access denied or revision not found.",{type:"error",timeout:3e3})}catch(e){return RED.notify("Access Denied, parse error.",{type:"error",timeout:3e3})}var t;RED.nodes.workspace(o.flowid)||(t=(()=>{let o=void 0;return RED.nodes.eachConfig(function(e){"FlowHubCfg"===e.type&&(o=e)}),o})())&&(t.flowrevisions||={},t.flowrevisions[o.flowid]!=o.revision)&&(t.flowrevisions[o.flowid]=o.revision),RED.clipboard.import(),setTimeout(()=>{var e=JSON.parse(o.flowdata);$("#red-ui-clipboard-dialog-import-text").val(JSON.stringify(e)).trigger("paste")},300)}).fail(e=>{var o="<p>Failed to retrieve flow data from FlowHub, request blocked.</p><p>Request: https://api.flowhub.org/v3/flows/"+$("#node-input-flowhubpull-flowid").val().trim()+"</p><p>AdBlocker or uBlock might have prevented request.</p><p>Please check browser console for more details.</p>";RED.notify(o,{type:"error",id:"FlowHubPull",timeout:4e3})})}function checkForDuplication(e){$.ajax({url:"FlowHubPull",type:"POST",contentType:"application/json; charset=utf-8",headers:{"X-FHB-TOKEN":e,"User-Agent":"FlowHub.org Sidebar"},data:JSON.stringify({token:e,flowid:$("#node-input-flowhubpull-flowid").val().trim(),revision:$("#node-input-flowhubpull-flowrevision").val().trim()})}).done((e,o)=>{try{if(!e||!e.flowdata||!Array.isArray(JSON.parse(e.flowdata))){try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){}return RED.notify("Access denied or revision not found.",{type:"error",timeout:3e3})}}catch(e){try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){}return RED.notify("Access Denied, parse error.",{type:"error",timeout:3e3})}if(e.status&&"ok"!=e.status){try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){}return RED.notify("Failed duplication check: "+e.msg,"error")}e=JSON.parse(e.flowdata);let t=[];if(!Array.isArray(e))return RED.notify("Access denied or revision not found.","error");if(e.forEach((e,o)=>{"tab"==e.type?RED.nodes.workspace(e.id)&&t.push(e):"junction"==e.type?RED.nodes.junction(e.id)&&t.push(e):"group"==e.type?RED.nodes.group(e.id)&&t.push(e):"subflow"==e.type?RED.nodes.subflow(e.id)&&t.push(e):RED.nodes.node(e.id)&&t.push(e)}),0==t.length){RED.notify("Found no duplication.","success");try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){}}else{RED.notify("Found "+t.length+" items of duplication","warning");try{$("#node-input-flowhubpull-sb-duplication-container-div").treeList("empty")}catch(e){$("#node-input-flowhubpull-sb-duplication-container-div").css({width:"100%",height:"calc(100%)"}).treeList({multi:!1}).on("treelistitemmouseover",function(e,o){}).on("treelistitemmouseout",function(e,o){}).on("treelistselect",function(e,o){o.node&&(RED.workspaces.show(o.node.z,!1,!1,!0),RED.view.reveal(o.node.id,!0),RED.view.redraw())}).on("treelistconfirm",function(e,o){var t;o.node&&(t=o.node.id,setTimeout(()=>{var e=RED.nodes.node(t);e&&(RED.view.reveal(e.id),RED.view.select(e.id),RED.editor.edit(e)),t==RED.workspaces.active()&&RED.workspaces.edit()},50))})}t=t.map(e=>({node:e,label:e.id,sublabel:e.type,selected:!1,checkbox:!1})),$("#node-input-flowhubpull-sb-duplication-container-div").treeList("data",t)}})}
    
    // Add your plugin as a new tabsheet in the right sidebar AFTER the flow editor is completely started
 var initSidebarComparePullPush = () => {
@@ -132,6 +132,7 @@ var initSidebarComparePullPush = () => {
     })
 
     $('#node-input-flowhubdiff-next-change-btn').on('click', showNextChangeButtonPressed)
+    $('#node-input-flowhubdiff-prev-change-btn').on('click', showPreviousChangeButtonPressed)
 
     $('#node-input-flowhubpush-push-btn').on('click', (e) => {
         if (e) { e.preventDefault(); }
@@ -143,13 +144,74 @@ var initSidebarComparePullPush = () => {
             timeout: 2000
         });
 
+        if ($('#node-input-flowhubpush-close-after-push').is(":checked")) {
+            let wrkspcid = RED.workspaces.active()
+            let removeWorkspaceAfterPush = (event, data) => {
+                setTimeout(() => { RED.comms.unsubscribe('flowhub:submission-result', removeWorkspaceAfterPush) }, 20)
+                if (data.statusType != "error") {
+                    RED.workspaces.delete(RED.nodes.workspace(wrkspcid))
+                }
+            }
+            RED.comms.subscribe('flowhub:submission-result', removeWorkspaceAfterPush)
+        }
+
         globalYourConfigNode.pushcomment = $('#node-input-flowhubpush-comment').val();
 
         svgGeneratorFunctionForVersion(RED)((svgdata) => {
             getInstalledNodeDetails((nodedetails) => {
-                doPushSubmission(getFlowDataFromCurrentWorkspace(), globalYourConfigNode, svgdata, nodedetails)
+                doPushSubmission(
+                    getFlowDataFromCurrentWorkspace(), 
+                    globalYourConfigNode, 
+                    svgdata, 
+                    nodedetails, 
+                    $('#node-input-flowhubpush-commit-date').val().trim()
+                )
             })
         });
+    });
+
+    $('#node-input-flowhubpush-push-to-trash-btn').on('click', (e) => {
+        if (e) { e.preventDefault(); }
+        ensureYourConfigNodeExists();
+
+        RED.notify("Preparing Submission", {
+            type: "warning",
+            id: "FlowHubPush",
+            timeout: 2000
+        });
+
+        let wrkspc = RED.nodes.workspace(RED.workspaces.active())
+        wrkspc.label = wrkspc.label.startsWith("[.trash]") ? wrkspc.label : ("[.trash] " + wrkspc.label.replaceAll(/[\[\]]/g, "|"))
+        wrkspc.changed = true;
+        RED.workspaces.refresh();
+        RED.sidebar.info.refresh(wrkspc);
+        RED.events.emit("flows:change", wrkspc) 
+        
+        let wrkspcid = wrkspc.id
+
+        let removeWorkspaceAfterPush = (event,data) => {
+            setTimeout( () => { RED.comms.unsubscribe('flowhub:submission-result', removeWorkspaceAfterPush) }, 199)
+            if (data.statusType != "error") {
+                RED.workspaces.delete(RED.nodes.workspace(wrkspcid))
+            }
+        }
+        RED.comms.subscribe('flowhub:submission-result', removeWorkspaceAfterPush)
+
+        setTimeout( () => {
+            globalYourConfigNode.pushcomment = $('#node-input-flowhubpush-comment').val();
+
+            svgGeneratorFunctionForVersion(RED)((svgdata) => {
+                getInstalledNodeDetails((nodedetails) => {                
+                    doPushSubmission(
+                        getFlowDataFromCurrentWorkspace(),
+                        globalYourConfigNode,
+                        svgdata,
+                        nodedetails,
+                        $('#node-input-flowhubpush-commit-date').val().trim()
+                    )
+                })
+            });
+        },500)
     });
 
     $("#node-input-flowhubpush-apiToken").typedInput({
@@ -190,12 +252,13 @@ var initSidebarComparePullPush = () => {
     })
 
     RED.comms.subscribe('flowhub:submission-result', (event, data) => {
+
         RED.notify("Submission status: " + data.status, {
             type: data.statusType,
             id: "FlowHubPushResult",
             timeout: data.statusType == "error" ? 3000 : 2000
         });
-
+        
         /* update an existing revision of a flow, this happens after the 
           flow was successfully submitted and updated */
         if (data.flowid && data.flowrevision) {
@@ -208,6 +271,12 @@ var initSidebarComparePullPush = () => {
                 $('#node-input-flowhubpush-comment').val(cfgNode.pushcomment)
                 RED.nodes.dirty(true)
             }
+        }
+
+        if (data.url) {
+            $('#flowhubpush-view-flow-link').attr('href', data.url).fadeIn(300);
+        } else {
+            $('#flowhubpush-view-flow-link').fadeOut(300)
         }
     });
 
@@ -247,16 +316,21 @@ var initSidebarComparePullPush = () => {
             ensureYourConfigNodeExists();
             globalYourConfigNode.flowid = item.flowid;
 
-            obtainFhbToken(globalYourConfigNode, (token) => {
-                if (token !== "" && token) {
-                    token = "?t=" + tokenToUrl(token)
-                }
-                $('#flowhubpull-sb-view-flow-link').attr(
-                    'href', 'https://flowhub.org/f/' + item.flowid + token
-                ).show();
-            })
-
+            if (item.url) {
+                $('#flowhubpull-sb-view-flow-link').attr('href', item.url).show();
+            } else {
+                obtainFhbToken(globalYourConfigNode, (token) => {
+                    if (token !== "" && token) {
+                        token = "?t=" + tokenToUrl(token)
+                    }
+                    $('#flowhubpull-sb-view-flow-link').attr(
+                        'href', `${frontendHostUrlForToken(token)}/f/${item.flowid}${token}`
+                    ).show();
+                })
+            }
             $('#node-input-flowhubpull-sb-import-flow-but').prop('disabled', false)
+        } else {
+            $('#flowhubpull-sb-view-flow-link').fadeOut(300)
         }
     }).on('treelistconfirm', function (event, item) {
         if (item.flowid) {
@@ -265,18 +339,23 @@ var initSidebarComparePullPush = () => {
             ensureYourConfigNodeExists();
             globalYourConfigNode.flowid = item.flowid;
 
-            obtainFhbToken(globalYourConfigNode, (token) => {
-                if (token !== "" && token) {
-                    token = "?t=" + tokenToUrl(token)
-                }
+            if (item.url) {
+                $('#flowhubpull-sb-view-flow-link').attr('href', item.url).show();
+            } else {
+                obtainFhbToken(globalYourConfigNode, (token) => {
+                    if (token !== "" && token) {
+                        token = "?t=" + tokenToUrl(token)
+                    }
 
-                $('#flowhubpull-sb-view-flow-link').attr(
-                    'href', 'https://flowhub.org/f/' + item.flowid + token
-                ).show();
-            })
-
+                    $('#flowhubpull-sb-view-flow-link').attr(
+                        'href', `${frontendHostUrlForToken(token)}/f/${item.flowid}${token}`
+                    ).show();
+                })
+            }
             $('#node-input-flowhubpull-sb-import-flow-but').prop('disabled', false)
             $("#node-input-flowhubpull-sb-import-flow-but").trigger('click');
+        } else {
+            $('#flowhubpull-sb-view-flow-link').fadeOut(300)
         }
     });
 
@@ -413,6 +492,12 @@ var initSidebarComparePullPush = () => {
         RED.nodes.dirty(true);
     })
 
+    $('#node-input-flowhubpush-confirm-push-to-trash').on('change', () => {
+        $('#node-input-flowhubpush-push-to-trash-btn').prop(
+            'disabled', !$('#node-input-flowhubpush-confirm-push-to-trash').is(":checked")
+        )
+    })
+
     $('#node-input-flowhubpull-flowrevision').on('change', () => {
         ensureYourConfigNodeExists();
         let val = $('#node-input-flowhubpull-flowrevision').val();
@@ -423,10 +508,29 @@ var initSidebarComparePullPush = () => {
         }
     })
 
+    // the iframe grabs the drag event away from the separator - so hide the iframe
+    // until the drag is completed.
+    RED.events.on("flowhub:comparepanelresize", () => { 
+
+        $('#flowhubdiff-svgimageiframe').addClass('flowhub-no-pointer-events')
+        
+        clearTimeout($('#flowhubdiff-svgimageiframe').data("timeoutid"))
+        $('#flowhubdiff-svgimageiframe').data('timeoutid',
+            setTimeout(() => { $('#flowhubdiff-svgimageiframe').removeClass('flowhub-no-pointer-events') }, 500))
+
+/*
+        $('#flowhubdiff-svgimageiframe').hide(); 
+        clearTimeout($('#flowhubdiff-svgimageiframe').data("timeoutid"))
+        $('#flowhubdiff-svgimageiframe').data('timeoutid',
+            setTimeout(() => { $('#flowhubdiff-svgimageiframe').show() }, 500))
+            */
+    }) 
+
     RED.panels.create({
         id: 'func-flowhub-tab-compare',
         resize: (topSze, botSze) => {
-            $('#node-input-flowhubdiff-target-container-div').parent().css('height', `calc( ${topSze}px - 32vh)`)
+            RED.events.emit("flowhub:comparepanelresize")
+            $('#node-input-flowhubdiff-target-container-div').parent().css('height', `calc( ${topSze}px - 28vh)`)
             $('#node-input-flowhubdiff-diffcontainer').parent().parent().css('height', botSze)
         }
     })
@@ -435,6 +539,14 @@ var initSidebarComparePullPush = () => {
     // the sidebar has been initialised and the config nodes are available.
     let fillSidebarForms = () => {
         RED.events.off('flows:loaded', fillSidebarForms);
+
+        RED.events.on("flowhub:tokenselected", (details) => {
+            if (details.token.startsWith("local://")) {
+                $($('#node-input-flowhubpush-commit-date').parent()).fadeIn(300)
+            } else {
+                $($('#node-input-flowhubpush-commit-date').parent()).fadeOut(300)
+            }
+        })
 
         let cfgNode = ensureYourConfigNodeExists();
 
@@ -473,6 +585,13 @@ var initSidebarComparePullPush = () => {
 
                 resp.tokens.forEach(tk => {
                     addTokenToList((tk.val == resp.apiToken ? "flowhub-token-selected" : ""), tk)
+                    if (tk.val == resp.apiToken) {
+                        RED.events.emit("flowhub:tokenselected", { 
+                            "token": tk.val, 
+                            "type": tk.type, 
+                            "name": tk.name 
+                        })
+                    }
                 })
                 addEventHandlersToTokenList(globalYourConfigNode)
             },
@@ -504,7 +623,7 @@ var initSidebarComparePullPush = () => {
                     token = "?t=" + tokenToUrl(token)
                 }
                 $('#flowhubpull-sb-view-flow-link').attr(
-                    'href', 'https://flowhub.org/f/' + globalYourConfigNode.flowid + token
+                    'href', `${frontendHostUrlForToken(token)}/f/${globalYourConfigNode.flowid}${token}`
                 ).show();
             })
         } else {
@@ -525,7 +644,7 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
 </script>
 
 <style>
-.flowhub-diff-viewer{overflow:scroll;max-width:90vw;padding-bottom:5px}.dv-differ{background-color:rgba(244,170,23,.476)!important}.dv-removed{background-color:#cbcb26!important}.dv-added{background-color:#56de78!important}.dv-error{background-color:#ff4b09!important}.dv-pre-elem,.dv-pre-elem-no-change{page-break-inside:avoid;font-family:monospace;max-width:100%;overflow:auto;display:block;word-wrap:break-word;margin:0!important}.prop-code-value{white-space:pre-wrap!important;white-space:-moz-pre-wrap!important;white-space:-pre-wrap!important;white-space:-o-pre-wrap!important;word-wrap:break-word!important}.flowhublogo{background-image:url("icons/@gregoriusrippenstein/node-red-contrib-flowhub/flowhublogo.svg");background-size:cover;background-repeat:no-repeat;background-position-x:center;background-position-y:top}th.revertable:after{content:" ⟲";color:"green"}.red-ui-tray-content #dialog-form{white-space:nowrap}.full-row .red-ui-typedInput-container{min-width:70%}.col input{min-width:100%}.sml-lbl{height:66px}.sml-lbl label{font-size:smaller;margin-bottom:0;display:block!important}.reg-lbl label{white-space:nowrap;margin-top:5px;height:0}.red-ui-editor .form-row label.full-lbl{white-space:normal;width:100%}.col{float:left;margin-right:5px;min-height:36px}.col .red-ui-typedInput-container{width:100%!important}.col-50{width:50%}.col-33{width:33%}.col-66{width:66%}.col-25{width:25%}.col-75{width:75%}.col-100 .red-ui-typedInput-container{width:70%!important}.col-100.no-label .red-ui-typedInput-container{width:100%!important}.txtarea{padding-bottom:26px}.txtarea label{vertical-align:top;margin-top:3px}.txtarea textarea{width:70%;margin-bottom:-28px!important}.btn-regular{margin-bottom:14px!important}.flowhub-token-selected{background-color:rgba(12,208,208,.709)}
+.flowhub-diff-viewer{max-width:90vw;padding-bottom:5px}.dv-differ{background-color:rgba(244,170,23,.476)!important}.dv-removed{background-color:#cbcb26!important}.dv-added{background-color:#56de78!important}.dv-error{background-color:#ff4b09!important}.dv-pre-elem,.dv-pre-elem-no-change{page-break-inside:avoid;font-family:monospace;max-width:100%;overflow:auto;display:block;word-wrap:break-word;margin:0!important}.prop-code-value{white-space:pre-wrap!important;white-space:-moz-pre-wrap!important;white-space:-pre-wrap!important;white-space:-o-pre-wrap!important;word-wrap:break-word!important}.flowhublogo{background-image:url("icons/@gregoriusrippenstein/node-red-contrib-flowhub/flowhublogo.svg");background-size:cover;background-repeat:no-repeat;background-position-x:center;background-position-y:top}th.revertable:after{content:" ⟲";color:"green"}.red-ui-tray-content #dialog-form{white-space:nowrap}.full-row .red-ui-typedInput-container{min-width:70%}.col input{min-width:100%}.sml-lbl{height:66px}.sml-lbl label{font-size:smaller;margin-bottom:0;display:block!important}.reg-lbl label{white-space:nowrap;margin-top:5px;height:0}.red-ui-editor .form-row label.full-lbl{white-space:normal;width:100%}.col{float:left;margin-right:5px;min-height:36px}.col .red-ui-typedInput-container{width:100%!important}.col-50{width:50%}.col-33{width:33%}.col-66{width:66%}.col-25{width:25%}.col-75{width:75%}.col-100 .red-ui-typedInput-container{width:70%!important}.col-100.no-label .red-ui-typedInput-container{width:100%!important}.txtarea{padding-bottom:26px}.txtarea label{vertical-align:top;margin-top:3px}.txtarea textarea{width:70%;margin-bottom:-28px!important}.btn-regular{margin-bottom:14px!important}.flowhub-token-selected{background-color:rgba(12,208,208,.709)}.flowhub-no-pointer-events{pointer-events:none}
 </style>
 
 <!-- The html for the right sidebar plugin screen -->
@@ -544,7 +663,7 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
       <div class="form-row">
          <div class="col-100">
 
-            <div class="form-row" style="margin-left: 10px; margin-top: 30px;">
+            <div class="form-row" style="margin-left: 10px; margin-top: 10px;">
                <button id="node-input-flowhubpull-sb-refresh-list-but"
                         class="red-ui-button"><i class="fa fa-refresh"></i> Refresh Flow List</button>
 
@@ -554,7 +673,7 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
                   target="_blank" href="">Webiliser <i class="fa fa-external-link"></i></a>
             </div>
 
-            <div class="form-row node-input-target-row node-input-target-list-row"
+            <div class="form-row"
                style="position: relative; min-height: 100px; height: 500px; margin-left: 10px; margin-right: 15px; margin-top: 5px;">
                <div style="position: absolute; top: -30px; right: 0px;">
                   <input type="text" id="node-input-flowhubpull-sb-target-filter" placeholder="Name or Flow Id">
@@ -598,7 +717,7 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
             </div>
 
 
-            <div class="form-row node-input-target-row node-input-target-list-row"
+            <div class="form-row"
                style="position: relative; min-height: 100px; height: 300px; margin-left: 10px; margin-right: 15px;">
                <div id="node-input-flowhubpull-sb-duplication-container-div" style="min-height: 300px;"></div>
             </div>
@@ -608,14 +727,12 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
 
    <!--func-flowhub-tab-compare#-->
    <div id="func-flowhub-tab-compare" style="display:none; height: 87vh;">
-      <div>
-         <div style="margin-left: 10px; height: 5vh;">
+      <div style="overflow: clip;">
+         <div style="margin-left: 10px; height: 5vh; margin-top: 12px;">
             <button id="node-input-flowhubdiff-compare-btn"
                class="red-ui-button"><i class="fa fa-balance-scale"></i> Compare</button>
-            <button id="node-input-flowhubdiff-next-change-btn"
-               class="red-ui-button hide"><i class="fa fa-arrow-right"></i> Next Change</button>
-
-            <a id="flowhubdiff-view-flow-link" style="color: blue; display: none; margin-left: 40px;"
+            <a id="flowhubdiff-view-flow-link" 
+               style="color: blue; display: none; margin-right: 20px; float: right;"
                target="_blank" href="">Webiliser <i class="fa fa-external-link"></i></a>
          </div>
 
@@ -627,13 +744,21 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
             <div id="node-input-flowhubdiff-target-container-div"></div>
          </div>
 
-         <div style="height: 25vh; margin-left: 10px; margin-right: 15px;">
+         <div style="height: 22vh; margin-left: 10px; margin-right: 15px;">
             <div id="node-input-flowhubdiff-svgcontainer"></div>
          </div>
       </div>
 
-      <div>
+      <div style="overflow: clip;"> 
          <div style="margin-left: 10px; overflow: hidden; display: flex; flex-direction: column; width: 97%; height: 47vh; margin-top: 10px;">
+            <div style="height: 5vh; margin-top: 5px; margin-bottom: 5px;">
+               <button id="node-input-flowhubdiff-prev-change-btn"
+                                    class="red-ui-button hide"><i class="fa fa-arrow-left"></i> Prev Change</button>
+               <button id="node-input-flowhubdiff-next-change-btn"
+                                    class="red-ui-button hide">Next Change <i class="fa fa-arrow-right"></i></button>
+               <span id="flowhubdiff-comparsion-status"></span>
+            </div>
+
             <div style="flex: 1 1 auto; overflow-y: auto;">
                <div id="node-input-flowhubdiff-diffcontainer" class="flowhub-diff-viewer"></div>
             </div>
@@ -646,12 +771,17 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
       <div class="form-row">
          <div class="col-100">
 
-            <div class="form-row" style="margin-top: 30px; margin-left: 10px;">
+            <div class="form-row" style="margin-top: 13px; margin-left: 10px;">
                <input type="checkbox" id="node-input-flowhubpush-pushnewflows"
                   style="display:inline-block; width:15px; vertical-align:baseline;">
                <label for="node-input-flowhubpush-pushnewflows" style="width: 230px;">
                   <span>Create new flows when pushing?</span>
                </label>
+
+               <a id="flowhubpush-view-flow-link" 
+                  style="color: blue; display: none; margin-right: 20px; float: right;" 
+                  target="_blank"
+                  href="">Webiliser <i class="fa fa-external-link"></i></a>
             </div>
 
             <div class="form-row" style="margin-left: 10px;">
@@ -664,9 +794,22 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
 
             <div class="form-row" style="margin-left: 10px;">
                <button id="node-input-flowhubpush-push-btn"
-                                    class="red-ui-button"><i class="fa fa-share-square-o"></i> Push to GitHub</button>
-               <a id="flowhubpush-view-flow-link" style="color: blue; display: none; margin-left: 80px;" target="_blank"
-                  href="">Webiliser <i class="fa fa-external-link"></i></a>
+                                    class="red-ui-button"><i class="fa fa-share-square-o"></i> Push</button>
+               <div style="margin-right: 10px; float: right; padding-right: 5px;">
+                  <button id="node-input-flowhubpush-push-to-trash-btn" 
+                          disabled=disabled
+                          class="red-ui-button"><i class="fa fa-trash"></i> Push To Trash</button>                        
+                  <input type="checkbox" id="node-input-flowhubpush-confirm-push-to-trash"
+                         style="width:15px;">
+               </div>
+            </div>
+
+            <div class="form-row" style="margin-left: 10px;">
+               <input type="checkbox" id="node-input-flowhubpush-close-after-push"
+                                                      style="display:inline-block; width:15px; vertical-align:baseline;">
+               <label for="node-input-flowhubpush-close-after-push" style="width: 230px;">
+                     <span>Delete tab after successful push?</span>
+               </label>
             </div>
 
             <div class="form-row" style="margin-left: 10px;">
@@ -674,14 +817,16 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
             </div>
 
             <div class="form-row" style="margin-left: 10px;">
-               <label for="node-input-flowhubpush-comment">
-                  <i class="fa fa-tag"></i> Comment
-               </label>
-               <textarea id="node-input-flowhubpush-comment" placeholder="comment"></textarea>
+               <textarea id="node-input-flowhubpush-comment" placeholder="Commit Message"></textarea>
             </div>
 
             <div class="form-row" style="margin-left: 10px;">
                Comment will be added to each push. Leave blank for a push to be commentless.
+            </div>
+
+            <div class="form-row" style="margin-left: 10px;">
+               <input id="node-input-flowhubpush-commit-date" placeholder="Commit Date" style="width: 250px;">
+               <a onclick="javascript:$('#node-input-flowhubpush-commit-date').val(''); return false;" class='button' href='#'>Clear</a>
             </div>
 
             <div class="form-row" style="margin-left: 10px;">
@@ -692,7 +837,7 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
                <label for="node-input-flowhubpush-apiToken">
                                     <i class="fa fa-key"></i>
                                     Current Token
-                                 </label>
+               </label>
                <input type="text" id="node-input-flowhubpush-apiToken">
                <input type="hidden" id="node-input-flowhubpush-apiTokenType">
             </div>
@@ -719,9 +864,9 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
             <div class="form-row" style="margin-left: 10px;">
                <input id="node-input-flowhubpush-new-token-name-field" placeholder="Token Name" style="width: 250px;">
                <button id="node-input-flowhubpush-add-token-btn"
-                                    class="red-ui-button"><i class="fa fa-plus"></i> Add</button>
+                                    title="Add Token" class="button"><i class="fa fa-plus"></i></button>
                <button id="node-input-flowhubpush-clear-token-btn"
-                                    class="red-ui-button"><i class="fa fa-times"></i> Clear</button>
+                                    title="Clear Fields" class="button"><i class="fa fa-times"></i></button>
             </div>
 
             <div class="form-row" style="margin-left: 10px;">
