@@ -38,8 +38,8 @@ module.exports = function (RED) {
                 var payload = JSON.parse(resp.body)
                 
                 if (!payload.flowdata || !payload.nodedetails) {
-                  node.status({ fill: "red", shape: "dot", text: "access denied" });
-                  return node.error("access denied")
+                  node.status({ fill: "red", shape: "dot", text: `access denied, for token ${(token || "").substr(0,30)}` });
+                  return node.error(`access denied for token '${token}'`)
                 }
 
                 node.send([
@@ -58,8 +58,7 @@ module.exports = function (RED) {
               } catch (err) {
                 node.status({ fill: "red", shape: "dot", text: "Response Failed" });
                 setTimeout(() => { node.status({}); }, 2500)
-                node.error(err)
-                return
+                return node.error(err)
               }
 
             }).catch(err => {
