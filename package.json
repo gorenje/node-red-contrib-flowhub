@@ -6,14 +6,16 @@
   },
   "keywords": [
     "node-red",
-    "flowhub",
+    "flowhub.org",
     "flow-sharing",
-    "collaborative",
+    "collaboration",
     "flow-development",
-    "flow-management",
-    "github"
+    "flow-version-control",
+    "github",
+    "git",
+    "visual-version-control"
   ],
-  "homepage": "https://flowhub.org/f/4a831589774ecb04",
+  "homepage": "https://flowhub.org",
   "license": "Don't be Evil.",
   "author": "Gerrit Riessen <nodered@spreads-the.love> (https://spread-the.love)",
   "engines": {
