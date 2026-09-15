@@ -119,6 +119,8 @@ RED.httpAdmin.post("/FlowHubDiff",
                     apiToken = node.credentials.apiToken
                 }
 
+                let clientrevision = (cfgnode?.flowrevisions || {})[msg.flowid];
+
                 import('got').then((module) => {
                     module.got.post(`${hostForToken(apiToken)}/v1/diff`, {
                         headers: {
@@ -129,6 +131,7 @@ RED.httpAdmin.post("/FlowHubDiff",
                             flowid: msg.flowid,
                             flowdata: msg.flowdata,
                             flowlabel: msg.flowlabel,
+                            clientrev: clientrevision
                         },
                         https: {
                             rejectUnauthorized: false
