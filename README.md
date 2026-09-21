@@ -18,6 +18,10 @@ To learn more, check out the [introduction screencast](https://flowhub.org/intro
 
 Generate [your own FlowHub.org token](https://flowhub.org/integration) to commit flows directly to your own GitHub repository. You will then be able to perform all functionalty of the FlowHub[]().org nodes on your own personal flows.
 
+## Local Usage
+
+FlowHub.org provides *visual* change management (aka version control) on top of GitHub. [FlowHub Local](https://flows.nodered.org/node/@gregoriusrippenstein/node-red-contrib-flowhub-server) (aka FlowHubⓁ) is a local-first server for the FlowHub.org nodes, replacing the GitHub requirement. FlowHubⓁ provides a local gitstore for managing change made to flows, locally, no internet connection is required. FlowHubⓁ is used in conjunction with the FlowHub.org nodes but provides a local gitstore, replacing GitHub.
+
 ## Details
 
 Two articles are available that better describe my intentions in creating FlowHub.org:
