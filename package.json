@@ -1,6 +1,6 @@
 {
   "name": "@gregoriusrippenstein/node-red-contrib-flowhub",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "dependencies": {
     "got": "~13"
   },
