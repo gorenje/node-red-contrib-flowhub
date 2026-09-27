@@ -31,7 +31,7 @@
       "flowhubcfg": "nodes/flowhubcfg.js"
     }
   },
-  "description": "FlowHub.org: flow management with GitHub.",
+  "description": "FlowHub.org: flow management with local Git and GitHub.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gorenje/node-red-contrib-flowhub.git"
