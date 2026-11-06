@@ -639,6 +639,11 @@ var initSidebarComparePullPush = () => {
         })
     }
     RED.events.on('flows:loaded', fillSidebarForms);
+
+    // flowhub actions that can be bound to key shortcuts
+    RED.actions.add("flowhub:flowhub-push-current-flow", () => {
+        $('#node-input-flowhubpush-push-btn').trigger('click')
+    })
 };
 
 RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarComparePullPush });
@@ -668,7 +673,7 @@ RED.plugins.registerPlugin("flowhub-major-sidebar-plugin", { onadd: initSidebarC
 
             <div class="form-row" style="margin-left: 10px; margin-top: 10px;">
                <button id="node-input-flowhubpull-sb-refresh-list-but"
-                        class="red-ui-button"><i class="fa fa-refresh"></i> Refresh Flow List</button>
+                        class="red-ui-button"><i class="fa fa-refresh"></i> Refresh</button>
 
                <img class='hide' id="func-sidebar-flowhub-pull-spinner" src='red/images/spin.svg'/>
 
