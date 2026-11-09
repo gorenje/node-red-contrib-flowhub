@@ -13,12 +13,54 @@ module.exports = function (RED) {
       }
     }
 
+    let obtainCatalogue = (msg,token) => {
+      import('got').then((module) => {
+        module.got.get(`${hostForToken(token)}/v1/flows?cb=` + new Date().getTime(), {
+          headers: {
+            "X-FHB-TOKEN": token
+          },
+          https: {
+            rejectUnauthorized: false
+          },
+          timeout: {
+            request: 25000,
+            response: 25000
+          }
+        }).then(resp => {
+          try {
+            if (!resp.body) {
+              node.status({ fill: "red", shape: "dot", text: "Catalogue Empty" });
+            } else {
+              node.send({
+                ...msg,
+                payload: JSON.parse(resp.body),
+                topic: "catalogue"
+              }, undefined)
+            }
+          } catch (err) {
+            node.status({ fill: "red", shape: "dot", text: "Catalogue Error" });
+          }
+        }).catch(err => {
+          console.error(err)
+          node.status({ fill: "red", shape: "dot", text: "Catalogue Failed / Exception" });
+          setTimeout(() => { node.status({}); }, 2500)
+        })
+      }).catch(err => { 
+        node.status({ fill: "red", shape: "dot", text: "Catalogue Failed" });
+        setTimeout(() => { node.status({}); }, 2500)
+      });
+    }
+
     let obtainFlow = (msg,token) => {
+      if (msg.flowhub_fetch_catalogue) {
+        return obtainCatalogue(msg,token)
+      }
+
       if (cfg.flowid || msg.flowid) {
         import('got').then((module) => {
           module.got.get(
-            `${hostForToken(token)}/v3/flows/` + (cfg.flowid || msg.flowid).trim() +
-            "?cb=" + new Date().getTime() + "&v=" + (cfg.flowrevision || msg.flowrevision || "").trim(),
+            `${hostForToken(token)}/v3/flows/` + (msg.flowid|| cfg.flowid).trim() +
+            "?cb=" + new Date().getTime() + "&v=" + (msg.flowrevision || cfg.flowrevision || "").trim(),
             {
               headers: {
                 "FlowHub-API-Version": "brownbear",
