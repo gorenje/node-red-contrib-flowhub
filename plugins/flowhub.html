@@ -637,6 +637,28 @@ var initSidebarComparePullPush = () => {
             $('#func-sidebar-flowhub-pull-spinner').show()
             flowHubPullUpdateFlows((lst) => { dirList.treeList('data', lst) }, token);
         })
+
+        let toClip = (cont) => {
+            if (RED.clipboard.copyText(cont)) {
+                RED.notify("copied docu link to clipboard", { timeout: 2000 })
+            }
+            return true
+        }
+
+        // a click in the comparison svg iframe generates a docu link here
+        window.onmessage = (e) => {
+            if (e.data.msg == "svg-node-click") {
+                let nde = RED.nodes.node(e.data.nodeid)
+                if (nde) {
+                    let lbl = RED.utils.getNodeLabel(nde, nde.id)
+                    if (nde.type == "group") {
+                        toClip(`<a class="ahl-group-only" data-ids="${nde.id}">${lbl}</a>`)
+                    } else {
+                        toClip(`<a class="ahl-node-only" data-ids="${nde.id}">${lbl}</a>`)
+                    }
+                }
+            }
+        }
     }
     RED.events.on('flows:loaded', fillSidebarForms);
 
