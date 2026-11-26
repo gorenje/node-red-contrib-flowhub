@@ -513,19 +513,11 @@ var initSidebarComparePullPush = () => {
     // the iframe grabs the drag event away from the separator - so hide the iframe
     // until the drag is completed.
     RED.events.on("flowhub:comparepanelresize", () => { 
-
         $('#flowhubdiff-svgimageiframe').addClass('flowhub-no-pointer-events')
         
         clearTimeout($('#flowhubdiff-svgimageiframe').data("timeoutid"))
         $('#flowhubdiff-svgimageiframe').data('timeoutid',
             setTimeout(() => { $('#flowhubdiff-svgimageiframe').removeClass('flowhub-no-pointer-events') }, 500))
-
-/*
-        $('#flowhubdiff-svgimageiframe').hide(); 
-        clearTimeout($('#flowhubdiff-svgimageiframe').data("timeoutid"))
-        $('#flowhubdiff-svgimageiframe').data('timeoutid',
-            setTimeout(() => { $('#flowhubdiff-svgimageiframe').show() }, 500))
-            */
     }) 
 
     RED.panels.create({
@@ -677,6 +669,65 @@ var initSidebarComparePullPush = () => {
                 }
             }
         }
+
+        // drag&drop support from the listing of flows. 
+        let customDropHandler = (event) => {
+            let itemPtr = event.originalEvent.dataTransfer.items
+            let itemCount = itemPtr.length
+
+            for (let idx = 0; idx < itemCount; idx++) {
+                let itm = itemPtr[idx]
+
+                if (itm.kind == "string" && itm.type == "text/x-flowhub-json") {
+                    itm.getAsString((content) => {
+                        let data = JSON.parse(content)
+                        
+                        if (data.type == "flowhubpull") {
+                            let nodesToBeImported = []
+
+                            for (var jdx = 0; jdx < data.id.length; jdx++) {
+                                if (data.id[jdx]) {
+                                    nodesToBeImported.push({
+                                        "id": RED.nodes.id(),
+                                        "type": "FlowHubPull",
+                                        "name": data.name[jdx],
+                                        "notab": false,
+                                        "flowid": data.id[jdx],
+                                        "flowname": data.name[jdx],
+                                        "flowrevision": "",
+                                        "y": 35 * jdx,
+                                        "wires": [[], []]
+                                    })
+                                }
+                            }
+
+                            try {
+                                (nodesToBeImported.length > 0) && RED.view.importNodes(nodesToBeImported)
+                            } catch (ex) { /*keep quiet*/ }
+                        }
+                    })
+                }
+            }
+        }
+
+        /*
+         * Because this happens before the workspace is setup, we set the drop listen
+         * when the target becomes available.
+         */
+        let defineCustomDropHandler = () => {
+            if ($('#red-ui-drop-target').length > 0) {
+                $('#red-ui-drop-target').on("drop", customDropHandler)
+
+                $(window).on("dragover", (e) => { e.preventDefault() })
+                $(document).on("dragover", (e) => { e.preventDefault() })
+
+                $(window).on("drop", customDropHandler)
+                $(document).on("drop", (e) => { e.preventDefault() })                
+            } else {
+                setTimeout(defineCustomDropHandler, 300)
+            }
+        }
+        setTimeout(defineCustomDropHandler, 300)
     }
     RED.events.on('flows:loaded', fillSidebarForms);
 
