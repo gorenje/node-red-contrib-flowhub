@@ -84,6 +84,8 @@ module.exports = function (RED) {
                   return node.error(`access denied for token '${token}'`)
                 }
 
+                node.status({}); // in case there was a status set (see above) from another message
+                
                 node.send([
                   {
                     ...msg,
@@ -134,7 +136,6 @@ module.exports = function (RED) {
           obtainFlow(msg, creds.apiToken)
         } else {
           obtainFlow(msg, "")
-
         }
       } else {
         obtainFlow(msg,"")

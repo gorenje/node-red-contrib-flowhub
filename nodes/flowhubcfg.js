@@ -265,6 +265,9 @@ RED.httpAdmin.post("/FlowHubPull",
     }
 );
 
+// this is rather badly done: this is a post request which retrieves the token configured
+// on the config node that was sent as the post body. nothing is changed, so really
+// this API should be a GET with an config node as query parameter.
 RED.httpAdmin.post("/FlowHubToken",
     RED.auth.needsPermission("flowhub.write"),
     (req, res) => {
@@ -289,6 +292,40 @@ RED.httpAdmin.post("/FlowHubToken",
                     } else {
                         res.sendStatus(404);
                     }
+                }
+            } else {
+                res.sendStatus(405);
+            }
+        } catch (err) {
+            res.sendStatus(500);
+        }
+    }
+);
+
+// this is silently called to update the token in the backend side. This happens when
+// the token is selected in the editor. If this isn't called, then the editor will
+// be using a different token to the server.
+RED.httpAdmin.post("/FlowHubTokenUpdate",
+    RED.auth.needsPermission("flowhub.write"),
+    (req, res) => {
+        try {
+            if (req.body && req.body.token) {
+                let token = req.body.token;
+
+                let cfgNodes = []
+                RED.nodes.eachNode(nde => {
+                    if (nde.type == "FlowHubCfg") {
+                        cfgNodes.push(nde)
+                    }
+                })
+
+                if (cfgNodes.length > 0) {
+                    let creds = RED.nodes.getCredentials(cfgNodes[0].id)
+                    // assigning the token will also save the credentials automagically.
+                    creds.apiToken = token
+                    res.sendStatus(200);                
+                } else {
+                    res.sendStatus(410);
                 }
             } else {
                 res.sendStatus(405);
