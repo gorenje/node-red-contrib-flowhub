@@ -59,7 +59,7 @@ module.exports = function (RED) {
       if (cfg.flowid || msg.flowid) {
         import('got').then((module) => {
           module.got.get(
-            `${hostForToken(token)}/v3/flows/` + (msg.flowid|| cfg.flowid).trim() +
+            `${hostForToken(token)}/v3/flows/` + (msg.flowid || cfg.flowid).trim() +
             "?cb=" + new Date().getTime() + "&v=" + (msg.flowrevision || cfg.flowrevision || "").trim(),
             {
               headers: {
@@ -80,7 +80,11 @@ module.exports = function (RED) {
                 var payload = JSON.parse(resp.body)
                 
                 if (!payload.flowdata || !payload.nodedetails) {
-                  node.status({ fill: "red", shape: "dot", text: `access denied, for token ${(token || "").substr(0,30)}` });
+                  node.status({ 
+                    fill: "red", 
+                    shape: "dot", 
+                    text: `access denied, for ${(token || "").substr(0,30)}` 
+                  });
                   return node.error(`access denied for token '${token}'`)
                 }
 
